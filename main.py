@@ -7,8 +7,8 @@ import json
 #rciar uma janela para edtar o json dos dados
 
 
-class ConfirmarSaida:
-    def __init__(self,page, funcao = None):
+class ConfirmarSaidaeResize:
+    def __init__(self,page, funcao = None, exibir = True):
         super().__init__()
         self.page = page
         self.funcao = funcao
@@ -24,10 +24,18 @@ class ConfirmarSaida:
         )
         self.page.window.on_event = self.window_event
         self.page.window.prevent_close = True 
-   
+
+        self.page.on_resized = self.page_resize
+        # self.page.window.on_event = self.page_resize
+        self.exibir = exibir
+        if self.exibir:
+            self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
+            self.page.overlay.append(self.pw) 
+        self.Ler_dados() 
 
 
     def window_event(self, e):
+            self.page_resize(e)
             if e.data == "close":
                 self.page.overlay.append(self.confirm_dialog)
                 
@@ -43,19 +51,44 @@ class ConfirmarSaida:
         self.confirm_dialog.open = False
         self.page.update()
 
-class Resize:
-    def __init__(self,page):
-        self.page = page
-        self.page.on_resized = self.page_resize
-        self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
-        self.page.overlay.append(self.pw)   
+
 
     def page_resize(self, e):
-        self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
-        self.pw.update()
+        if self.exibir:
+            self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
+            self.pw.update()
+        with open('assets/tamanho.txt', 'w') as arq:
+            arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+
+  
+
+    def Ler_dados(self):
+        try:
+            with open('assets/tamanho.txt', 'r') as arq:
+                po = arq.readline()
+        except:
+            with open('assets/tamanho.txt', 'w') as arq:
+                arq.write(f'{0},{0},{0},{0}')
+        po = po.split(',')
+        po = [int(float(i)) for i in po]
+        
+        self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
 
 
-class Resize2:
+
+# class Resize:
+#     def __init__(self,page):
+#         self.page = page
+#         self.page.on_resized = self.page_resize
+#         self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
+#         self.page.overlay.append(self.pw)   
+
+#     def page_resize(self, e):
+#         self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
+#         self.pw.update()
+
+
+class Resize:
     def __init__(self,page, exibir = True):
         self.page = page
         self.page.on_resized = self.page_resize
@@ -1165,50 +1198,74 @@ class ClassName(ft.Row):
             ],
             on_change=self.Carregar
         )
-        
-        self.page.appbar = ft.AppBar(
-            actions = [           
-                self.drop_estudos,
-                ft.FilledButton(
-                    text = 'Add. linha',
-                    height=20,
-                    style=ft.ButtonStyle(
-                        padding=ft.Padding(4,0,4,0)
+    
+        self.Appbar(mostrar=True)
+        self.navigation_bar(mostrar = False)
+    
+    def Appbar(self, mostrar = True): 
+        if mostrar:   
+            self.page.appbar = ft.AppBar(
+                actions = [           
+                    self.drop_estudos,
+                    ft.FilledButton(
+                        text = 'Add. linha',
+                        height=20,
+                        style=ft.ButtonStyle(
+                            padding=ft.Padding(4,0,4,0)
+                        ),
+                        on_click=self.Add_nova_linha
+                        
+                    ),             
+                    ft.OutlinedButton(
+                        text = 'Novos estudos',
+                        height=20,
+                        style=ft.ButtonStyle(
+                            padding=ft.Padding(4,0,4,0)
+                        ),
+                        on_click=self.Criar_novo_estudo
+                        
                     ),
-                    on_click=self.Add_nova_linha
-                    
-                ),             
-                ft.OutlinedButton(
-                    text = 'Novos estudos',
-                    height=20,
-                    style=ft.ButtonStyle(
-                        padding=ft.Padding(4,0,4,0)
+                ],
+                
+                leading = TemaSelectSysten(),
+                title=ft.Text(
+                    value = 'Top Bar', 
+                    weight='BOLD', 
+                    color=ft.colors.GREEN_600,
+                    style=ft.TextStyle(
+                        shadow = ft.BoxShadow(
+                            blur_radius = 300,
+                            # blur_style = ft.ShadowBlurStyle.OUTER,
+                            color = ft.colors.WHITE
+                        ),                
+                    )
                     ),
-                    on_click=self.Criar_novo_estudo
-                    
-                ),
-            ],
-            leading = TemaSelectSysten(),
-            title=ft.Text(
-                value = 'Top Bar', 
-                weight='BOLD', 
-                color=ft.colors.GREEN_600,
-                style=ft.TextStyle(
-                    shadow = ft.BoxShadow(
-                        blur_radius = 300,
-                        # blur_style = ft.ShadowBlurStyle.OUTER,
-                        color = ft.colors.WHITE
-                    ),                
-                )
-                ),
-            shadow_color=ft.colors.BLUE,
-            elevation=8,
-            toolbar_height = 30,
-            bgcolor=ft.colors.BLACK38,
-            automatically_imply_leading=False,
-        )     
+                shadow_color=ft.colors.BLUE,
+                elevation=8,
+                toolbar_height = 30,
+                bgcolor=ft.colors.BLACK38,
+                automatically_imply_leading=False,
+            )     
 
-        self.navigation_bar(False)
+
+    def navigation_bar(self, mostrar = True):
+        if mostrar:
+            self.page.navigation_bar = ft.CupertinoNavigationBar(
+                    bgcolor= ft.colors.BLACK38,
+                    inactive_color=ft.colors.GREY,
+                    active_color=ft.colors.GREEN_800,
+                    on_change=lambda e: print("Selected tab:", e.control.selected_index),
+                    destinations=[
+                        ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="Explore"),
+                        ft.NavigationBarDestination(icon=ft.icons.COMMUTE, label="Commute"),
+                        ft.NavigationBarDestination(
+                            icon=ft.icons.BOOKMARK_BORDER,
+                            selected_icon=ft.icons.BOOKMARK,
+                            label="Explore",
+                        ),
+                    ]
+                )
+
 
     def did_mount(self):
         # for k in list(self.arquiv.get(nome, None).keys())[-1]
@@ -1289,24 +1346,6 @@ class ClassName(ft.Row):
         self.estudos.update()
         # return sinal
 
-
-    def navigation_bar(self, mostrar = True):
-        if mostrar:
-            self.page.navigation_bar = ft.CupertinoNavigationBar(
-                    bgcolor= ft.colors.BLACK38,
-                    inactive_color=ft.colors.GREY,
-                    active_color=ft.colors.GREEN_800,
-                    on_change=lambda e: print("Selected tab:", e.control.selected_index),
-                    destinations=[
-                        ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="Explore"),
-                        ft.NavigationBarDestination(icon=ft.icons.COMMUTE, label="Commute"),
-                        ft.NavigationBarDestination(
-                            icon=ft.icons.BOOKMARK_BORDER,
-                            selected_icon=ft.icons.BOOKMARK,
-                            label="Explore",
-                        ),
-                    ]
-                )
 
 
 
@@ -1539,9 +1578,9 @@ def main(page: ft.Page):
 
     saida = Saida(page)
     # print = saida.pprint 
-    ConfirmarSaida(page)
+    ConfirmarSaidaeResize(page,exibir=False)
     # Resize2(page)
-    Resize2(page, exibir=False)
+    # Resize(page, exibir=False)
     page.update()
     p = ClassName(page  = page, pprint = saida.pprint)
     # page.on_window_event = 
