@@ -3,6 +3,10 @@
 import flet as ft
 import os
 import json
+
+#rciar uma janela para edtar o json dos dados
+
+
 class ConfirmarSaida:
     def __init__(self,page, funcao = None):
         super().__init__()
@@ -50,6 +54,38 @@ class Resize:
         self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
         self.pw.update()
 
+
+class Resize2:
+    def __init__(self,page, exibir = True):
+        self.page = page
+        self.page.on_resized = self.page_resize
+        self.page.window.on_event = self.page_resize
+        self.exibir = exibir
+        if self.exibir:
+            self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
+            self.page.overlay.append(self.pw) 
+        self.Ler_dados()  
+
+    def page_resize(self, e):
+        if self.exibir:
+            self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
+            self.pw.update()
+        with open('assets/tamanho.txt', 'w') as arq:
+            arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+
+  
+
+    def Ler_dados(self):
+        try:
+            with open('assets/tamanho.txt', 'r') as arq:
+                po = arq.readline()
+        except:
+            with open('assets/tamanho.txt', 'w') as arq:
+                arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+        po = po.split(',')
+        po = [int(float(i)) for i in po]
+        
+        self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
 
 
 class Saida:
@@ -726,7 +762,7 @@ larguras = {
     "bpm_semana": 80,
     "evolução": 80,
     "NOTAS_S": 80,
-    "dias_pata_aumentar_1_bpm": 130,
+    "dias_para_aumentar_1_bpm": 130,
     "tempo_para_conseguir": 130,
     "bpm_máximas": 80,
     "dias":40,    
@@ -734,8 +770,9 @@ larguras = {
 
 def Calc_larg(i):
     dias = [d for d in list(range(1,32))]
-    if i in ['item de estudo',"item_de_estudo", "velocidade_palhetada", 'velocidade palhetada(n/s)','dias pata aumentar 1 bpm','tempo para conseguir (dias)', "tempo_para_conseguir", "dias_pata_aumentar_1_bpm"]:
+    if i in ['item de estudo',"item_de_estudo", "velocidade_palhetada", 'velocidade palhetada(n/s)','dias para aumentar 1 bpm','tempo para conseguir (dias)', "tempo_para_conseguir", "dias_para_aumentar_1_bpm"]:
         return larguras["velocidade_palhetada"]
+  
     elif i in dias:
         return larguras.get('dias', 80)
     else:
@@ -759,6 +796,9 @@ def MeuCampoTexto(nome = None, width = None,on_change = None):
         on_change=on_change,
     )
 
+
+
+
 class Estudo(ft.Container):
     def __init__(self,                
         Ano = None,
@@ -769,11 +809,11 @@ class Estudo(ft.Container):
         tempo = None,
         NOTAS_TEMPO = None,
         meta = None, 
-        bgcolor = None,               
-        func = None,    
+        bpm_semana = None,
+        dias = [None for i in range(32)],
+        func = None,               
         ):
         super().__init__()
-        self.bgcolor = bgcolor
         self.expand_loose = True
 
 
@@ -788,16 +828,21 @@ class Estudo(ft.Container):
         self.tempo = MeuCampoTexto(nome = tempo, width = larguras.get("tempo", 80), on_change = self.Savar)
         self.NOTAS_TEMPO = MeuCampoTexto(nome = NOTAS_TEMPO, width = larguras.get("NOTAS_TEMPO", 80), on_change = self.Savar)
         self.meta = MeuCampoTexto(nome = meta, width = larguras.get("meta", 80), on_change = self.Savar)
+        self.bpm_semana = MeuCampoTexto(nome = bpm_semana, width = larguras.get("bpm_semana", 80), on_change = self.Savar)
 
-        self.velocidade_palhetada = MeuCampoTexto(width=larguras["velocidade_palhetada"])
-        self.bpm_semana = MeuCampoTexto()
-        self.evolução = MeuCampoTexto()
-        self.NOTAS_S = MeuCampoTexto()
-        self.dias_pata_aumentar_1_bpm = MeuCampoTexto(width=larguras["dias_pata_aumentar_1_bpm"])
-        self.tempo_para_conseguir = MeuCampoTexto(width=larguras["tempo_para_conseguir"])
-        self.bpm_máximas = MeuCampoTexto()  
 
-        self.dias = [MeuCampoTexto(width=Calc_larg(i)) for i in range(1,32)]
+        self.velocidade_palhetada = self.MeuCampoTexto1(width=larguras["velocidade_palhetada"])
+        self.evolução = self.MeuCampoTexto1()
+        self.NOTAS_S = self.MeuCampoTexto1()
+        self.dias_pata_aumentar_1_bpm = self.MeuCampoTexto1(width=larguras["dias_para_aumentar_1_bpm"],)
+        self.tempo_para_conseguir = self.MeuCampoTexto1(width=larguras["tempo_para_conseguir"])
+        self.bpm_máximas = self.MeuCampoTexto1()  
+  
+        self.dias = [self.MeuCampoTexto1(nome = dias[i-1], width=Calc_larg(i), on_change = self.Calc_max, somente_leitura=False, data = 'dias') for i in range(1,32)]
+        
+        self.Calc_max(1)
+
+
         self.content = ft.Row(
             expand = True,
             # scroll = ft.ScrollMode.AUTO,
@@ -812,8 +857,8 @@ class Estudo(ft.Container):
                 self.tempo,
                 self.NOTAS_TEMPO,
                 self.meta,
-                self.velocidade_palhetada,
                 self.bpm_semana,
+                self.velocidade_palhetada,
                 self.evolução,
                 self.NOTAS_S,
                 self.dias_pata_aumentar_1_bpm,
@@ -822,11 +867,100 @@ class Estudo(ft.Container):
             ]+self.dias   
         )
 
+    def Calc_max(self, e):
+        valores_dias = [int(v.value) if v.value else 0  for v in self.dias]
+        maximo = max(valores_dias)
+        self.bpm_máximas.value = maximo if maximo > 0 else None
+        try:
+            self.bpm_máximas.update()
+        except:
+            pass
+
+
+        if self.bpm_máximas.value and self.NOTAS_TEMPO.value:
+            ns = int(self.NOTAS_TEMPO.value) * int(self.bpm_máximas.value)/60
+            self.NOTAS_S.value = round(ns,1)
+            try:
+                self.NOTAS_S.update()
+            except:
+                pass
+
+        
+        if self.NOTAS_S.value and self.técnica.value in ['palhetada', 'Palhetada', 'P.A']:
+            self.velocidade_palhetada.value = round(self.NOTAS_S.value, 1)
+            try:
+                self.velocidade_palhetada.update()
+            except:
+                pass
+
+        if self.bpm_semana.value:
+            self.dias_pata_aumentar_1_bpm.value = round(int(7/int(self.bpm_semana.value)),0)
+            try:
+                self.dias_pata_aumentar_1_bpm.update()
+            except:
+                pass  
+
+
+        if self.dias_pata_aumentar_1_bpm.value and self.bpm_máximas.value:
+            if int(self.meta.value) <= int(self.bpm_máximas.value):
+                self.tempo_para_conseguir.value = 'Parabéns'
+            else:
+                self.tempo_para_conseguir.value = round(int((int(self.meta.value) - int(self.bpm_máximas.value))/int(self.dias_pata_aumentar_1_bpm.value)),0)
+            
+            try:
+                self.tempo_para_conseguir.update()
+            except:
+                pass 
+
+            valores_dias1 = [int(v.value) if v.value else 999  for v in self.dias]
+            minimo = min(valores_dias1)
+            self.evolução.value = maximo - minimo
+            try:
+                self.evolução.update()
+            except:
+                pass 
+
+        try:
+            # print(e.control.data)
+            if e.control.data == 'dias':
+                if self.func:
+                    self.func(e)
+        except:
+            pass 
+
+
+
+
+
 
 
     def Savar(self, e):
         if self.func:
             self.func(e)
+
+    def MeuCampoTexto1(self, nome = None, width = None,on_change = None, somente_leitura = True, data = None):
+        if width:
+            larg = width
+        else:
+            larg = Calc_larg(nome)
+        return ft.TextField(
+            value = nome,
+            data = data,
+            width=larg,
+            content_padding=ft.Padding(4,0,4,0),
+            # height=35,
+            # dense=True,
+            text_align=ft.TextAlign.CENTER,
+            multiline=True,
+            max_lines = 2,
+            expand = True,
+            on_change=on_change,
+            input_filter = ft.NumbersOnlyInputFilter(),
+            read_only= somente_leitura,
+            selection_color = ft.colors.TRANSPARENT if somente_leitura else None,
+            focused_border_color = ft.colors.TRANSPARENT if somente_leitura else None,
+        )            
+
     # @property
     # def bgcolor(self):
     #     return self._bgcolor
@@ -843,6 +977,7 @@ class ClassName(ft.Row):
         self.expand = True
         self.run_spacing = 0
         self.scroll = ft.ScrollMode.AUTO 
+        # self.on_scroll = self.Ocultar
         self.vertical_alignment = ft.CrossAxisAlignment.START
         self.nomes_colunas = [
             'Ano', 
@@ -853,22 +988,30 @@ class ClassName(ft.Row):
             'tempo (min)'	,
             'NOTAS/ TEMPO'	,
             'meta'	,
+            'bpm/semana',
             'velocidade palhetada(n/s)'	,
-            'bpm/semana'	,
-            'evolução'	,
+            'evolução (bpm)'	,
             'NOTAS /S'	,
-            'dias pata aumentar 1 bpm'	,
+            'dias para aumentar 1 bpm'	,
             'tempo para conseguir (dias)'	,
             'bpm máximas'
         ]
         self.nomes_colunas += list(range(1,32))
         self.style_text = ft.TextStyle(
             weight = 'BOLD',
-
         )
 
-        self.LerDadosSalvos()
+        self.caminho_arquivo = Verificar_pasta('Guitarra').caminho('estudoguitarra.json')
+        self.arquiv = self.ler_json(
+            filename = self.caminho_arquivo,
 
+            )
+        self.lista_estudos = list(self.arquiv.keys())
+        
+        self.estudo_mais_recente = self.Nome_estudo_mais_recente()
+        self.salvos = self.Gerar_lista_salvos(self.estudo_mais_recente)
+
+        # print(self.salvos)
         self.linha = ft.Row(
             expand_loose = True,
             # scroll = ft.ScrollMode.AUTO,
@@ -876,20 +1019,50 @@ class ClassName(ft.Row):
             run_spacing=0, 
             controls = [
                 ft.Container(
-                    ft.Text(
-                        i, 
-                        style=self.style_text,
-                        text_align=ft.TextAlign.CENTER
-                    ), 
+                    content = ft.Column(
+                        spacing = 0,
+                        run_spacing=0,
+                        horizontal_alignment = ft.CrossAxisAlignment.CENTER,
+                        alignment = ft.MainAxisAlignment.START,
+                        controls = [
+                            ft.Checkbox(
+                                data='dias',
+                                splash_radius = 0,
+                                shape = ft.CircleBorder(),
+                                scale= 0.5,                   
+                                label_position = ft.LabelPosition.LEFT,
+                                visual_density = ft.VisualDensity.COMPACT,
+                                on_change=self.Salvar
+                            ),
+                            ft.Text(
+                                value = i, 
+                                style=self.style_text,
+                                text_align=ft.TextAlign.CENTER
+                            ), 
+                        ],
+                        # wrap = True,
+                        width=Calc_larg(i),
+                        height=80,
+                    ),
+                    
+
                     bgcolor=ft.colors.SURFACE_VARIANT,
                     alignment = ft.alignment.center,
-                    width=Calc_larg(i),
-                    height=50,
+                    padding=0,
+                    
+                   
                 ) 
                 for i in self.nomes_colunas
             ]
         )
 
+        self.page.floating_action_button = ft.FloatingActionButton(
+            text = 'Exibir',
+            data = False,
+            bgcolor=ft.colors.SURFACE_VARIANT,
+
+            on_click=self.Ocultar
+        )
         self.estudos = ft.Column(
             expand = True,
             scroll = ft.ScrollMode.AUTO,
@@ -897,55 +1070,58 @@ class ClassName(ft.Row):
             run_spacing=0, 
             alignment = ft.MainAxisAlignment.START,               
             controls = [
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '1NPC_MD asdasd a  asd as asd asdd s',
-                    func=self.Salvar,
-                ),
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '3NPC_MD',
-                    func=self.Salvar,
-                ), 
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '4NPC_MD',
-                    func=self.Salvar,
-                ),
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '5NPC_MD',
-                    func=self.Salvar,
-                ),
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '3NPC_MD',
-                    func=self.Salvar,
-                ),
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '6NPC_MD',
-                    func=self.Salvar,
-                ),
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '7NPC_MD',
-                    func=self.Salvar,
-                ),
-                Estudo(
-                    Ano = '2024',
-                    Mês = 'setembro',
-                    item_de_estudo = '8NPC_MD',
-                    func=self.Salvar,
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '1NPC_MD asdasd a  asd as asd asdd s',
+                #     func=self.Salvar,
+                # ),
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '3NPC_MD',
+                #     func=self.Salvar,
+                # ), 
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '4NPC_MD',
+                #     func=self.Salvar,
+                # ),
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '5NPC_MD',
+                #     func=self.Salvar,
+                # ),
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '3NPC_MD',
+                #     func=self.Salvar,
+                # ),
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '6NPC_MD',
+                #     func=self.Salvar,
+                # ),
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '7NPC_MD',
+                #     func=self.Salvar,
+                # ),
+                
+                # Estudo(
+                #     Ano = '2024',
+                #     Mês = 'setembro',
+                #     item_de_estudo = '8NPC_MD',
+                #     func=self.Salvar,
 
-                ),                                                                                                                                                                                               
+                # ), 
+                Estudo(*i)   
+                for i in self.salvos                                                                                                                                                                                          
             ]
         ) 
         self.controls = [
@@ -958,6 +1134,7 @@ class ClassName(ft.Row):
                 controls = [
                     self.linha,                                             
                     self.estudos,
+                 
                 ] 
             )
         ]
@@ -966,14 +1143,251 @@ class ClassName(ft.Row):
             i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
 
 
-    def LerDadosSalvos(self):
-        self.caminho_arquivo = Verificar_pasta('Guitarra').caminho('estudoguitarra.json')
-        self.arquiv = self.ler_json(
-            filename = self.caminho_arquivo,
+
+
+            
+        # print(estudo_mais_recente)
+        self.drop_estudos = ft.Dropdown(
+            hint_text='Lista de Estudos',
+            value = self.estudo_mais_recente,
+            expand_loose = True,
+            # width=200,
+            
+            padding = ft.Padding(0,0,0,0),
+            height = 50,
+            alignment = ft.alignment.bottom_center,
+            text_size = 18,
+            content_padding = ft.Padding(5,0,0,0),
+            prefix_text = 'Lista de Estudos: ',
+            # icon_content = ft.Icon(name = ft.icons.FILTER_LIST),
+            options=[ft.dropdown.Option(i)
+                for i in self.lista_estudos[::-1]
+            ],
+            on_change=self.Carregar
+        )
+        
+        self.page.appbar = ft.AppBar(
+            actions = [           
+                self.drop_estudos,
+                ft.FilledButton(
+                    text = 'Add. linha',
+                    height=20,
+                    style=ft.ButtonStyle(
+                        padding=ft.Padding(4,0,4,0)
+                    ),
+                    on_click=self.Add_nova_linha
+                    
+                ),             
+                ft.OutlinedButton(
+                    text = 'Novos estudos',
+                    height=20,
+                    style=ft.ButtonStyle(
+                        padding=ft.Padding(4,0,4,0)
+                    ),
+                    on_click=self.Criar_novo_estudo
+                    
+                ),
+            ],
+            leading = TemaSelectSysten(),
+            title=ft.Text(
+                value = 'Top Bar', 
+                weight='BOLD', 
+                color=ft.colors.GREEN_600,
+                style=ft.TextStyle(
+                    shadow = ft.BoxShadow(
+                        blur_radius = 300,
+                        # blur_style = ft.ShadowBlurStyle.OUTER,
+                        color = ft.colors.WHITE
+                    ),                
+                )
+                ),
+            shadow_color=ft.colors.BLUE,
+            elevation=8,
+            toolbar_height = 30,
+            bgcolor=ft.colors.BLACK38,
+            automatically_imply_leading=False,
+        )     
+
+        self.navigation_bar(False)
+
+    def did_mount(self):
+        # for k in list(self.arquiv.get(nome, None).keys())[-1]
+        # for i in self.linha.controls[15:]:
+        #         i.visible = True
+
+        # for k in self.estudos.controls:
+        #     for i in k.content.controls[15:]:                  
+        #         i.visible = True
+
+        # print(self.arquiv.get(self.estudo_mais_recente, None)['visiv'])
+        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
+            i.content.controls[0].value = j
+
+        # for k in self.estudos.controls:
+        #     for i in k.content.controls[15:]:                  
+        #         i.visible = True            
+
+        self.Ocultacao(False)
+
+    def Ocultar(self,e):
+        e.control.data = not e.control.data
+        self.Ocultacao(e.control.data)
+        if e.control.data:
+            e.control.text = 'Ocultar'
+            e.control.bgcolor=ft.colors.SURFACE_VARIANT   
+        else:
+            e.control.text = 'Exibir'
+            e.control.bgcolor=ft.colors.with_opacity(0.3,ft.colors.SURFACE_VARIANT)
+        e.control.update()
+
+
+
+    def Ocultacao(self, sinal):     
+        if sinal:
+            for i in self.linha.controls[:2]+self.linha.controls[3:15]:
+                i.visible = True
+
+            for i in self.linha.controls[15:]:
+                  i.visible = True
+
+            for k in self.estudos.controls:
+                for i in k.content.controls[15:]:                  
+                  i.visible = True
+
+
+            for k in self.estudos.controls:
+                for i in k.content.controls[:2]+k.content.controls[3:15]:
+                    i.visible = True                
+   
+        else:
+            for i in self.linha.controls[:2]+self.linha.controls[3:15]:
+                i.visible = False
+
+
+            for i in self.linha.controls[15:]:
+                if i.content.controls[0].value:
+                    i.visible = False
+                else:
+                    i.visible = True
+
+            for k in self.estudos.controls:
+                for n,i in enumerate(k.content.controls[15:]):
+                    if self.linha.controls[15+n].content.controls[0].value:
+                        i.visible = False
+                    else:
+                        i.visible = True
+
+
+            for k in self.estudos.controls:
+                for i in k.content.controls[:2]+k.content.controls[3:15]:
+                    i.visible = False
+
+
+
+        
+        self.linha.update()
+        self.estudos.update()
+        # return sinal
+
+
+    def navigation_bar(self, mostrar = True):
+        if mostrar:
+            self.page.navigation_bar = ft.CupertinoNavigationBar(
+                    bgcolor= ft.colors.BLACK38,
+                    inactive_color=ft.colors.GREY,
+                    active_color=ft.colors.GREEN_800,
+                    on_change=lambda e: print("Selected tab:", e.control.selected_index),
+                    destinations=[
+                        ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="Explore"),
+                        ft.NavigationBarDestination(icon=ft.icons.COMMUTE, label="Commute"),
+                        ft.NavigationBarDestination(
+                            icon=ft.icons.BOOKMARK_BORDER,
+                            selected_icon=ft.icons.BOOKMARK,
+                            label="Explore",
+                        ),
+                    ]
+                )
+
+
+
+    def Nome_estudo_mais_recente(self):
+        try:
+            with open('assets/nestrec.txt', 'r')as arq:
+                er = arq.readline()
+            return er
+        except:
+            with open('assets/nestrec.txt', 'w')as arq:
+                arq.write('padrão')
+            return 'padrão'
+
+
+    def Criar_novo_estudo(self, e):
+        old_actions = self.page.appbar.actions.copy()
+        texto = ft.TextField(
+                label='Digite o nome da lista',
+                # hint_text='Nome da lista de estudos',
+                content_padding=ft.Padding(4,0,0,0),
+                height=30,
+
 
             )
+        def Criar(e):
+            self.estudos.controls = []
+            self.estudos.update()
+            self.estudos.controls.append(Estudo(func=self.Salvar))
+            self.estudos.controls.append(Estudo(func=self.Salvar))
+            for n,i in enumerate(self.estudos.controls):
+                i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
+
+            self.estudos.update()
+            # drop_estudos.update()
+            self.page.appbar.actions = old_actions
+            self.page.appbar.update()
+            # page.appbar.actions[0].value = 'leo'
+            e.control.data = texto.value
+            self.Salvar(e)
+
+            self.lista_estudos = list(self.arquiv.keys())
+            self.drop_estudos.options=[ft.dropdown.Option(i)
+                for i in self.lista_estudos[::-1]
+            ]
+            self.drop_estudos.value = texto.value
+            self.drop_estudos.update()
+            # print(self.page.appbar.actions[0].value )
+
+        def Cancelar(e):
+            self.page.appbar.actions = old_actions
+            self.page.appbar.update()            
+
+
+        self.page.appbar.actions = [
+            texto,
+            ft.FilledButton(
+                text='Criar',
+                on_click=Criar,
+            ),
+            ft.OutlinedButton(
+                text='Cancelar',
+                on_click=Cancelar,
+            ),            
+        ]
+        self.page.appbar.update()
+
+
+
+    def Gerar_lista_salvos(self, nome = 'padrão'):         
+         return [[i for j,i in list(self.arquiv.get(nome, None).get(k, None).items())+[(None,self.Salvar)]] for k in list(self.arquiv.get(nome, None).keys())[:-1]]
+         
+
+    async def Add_nova_linha(self, e):
+        self.estudos.controls.append(Estudo(func=self.Salvar))
+        for n,i in enumerate(self.estudos.controls):
+            i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
+
+        self.estudos.update()
 
     def Salvar(self, e):
+        # print(e.control.data)
         dic = {}
         for n,i in enumerate(self.estudos.controls):
             dic[n] = {
@@ -984,12 +1398,44 @@ class ClassName(ft.Row):
                 'Articulação': i.Articulação.value,
                 'tempo': i.tempo.value,
                 'NOTAS_TEMPO': i.NOTAS_TEMPO.value,
-                'meta': i.meta.value
+                'meta': i.meta.value,
+                'bpm_semana': i.bpm_semana.value,
+                'dias': [d.value for d in i.dias]
             }
-        self.escrever_json(dic, self.caminho_arquivo)
-        print('dados salvos')
-        # print(dic)
 
+        dic['visiv'] = []
+        for i in self.linha.controls[15:]:
+            if i.content.controls[0].value:
+                dic['visiv'].append(True)
+            else:
+                dic['visiv'].append(False)
+
+
+
+
+
+        if e.control.data and e.control.data != 'dias':
+            nome = e.control.data
+        else:
+            nome = self.drop_estudos.value
+        self.arquiv = self.ler_json(
+            filename = self.caminho_arquivo,
+
+            )  
+        self.arquiv[nome] = dic        
+        self.escrever_json(self.arquiv, self.caminho_arquivo)
+        # print('dados salvos')
+        # print({'padrão':dic})
+
+
+    def Carregar(self, e):
+        nome  = e.control.value
+        lista = self.Gerar_lista_salvos(nome)
+        # print(lista)
+        self.estudos.controls = [ Estudo(*i)    for i in lista ]
+        with open('nestrec.txt', 'w') as arq:
+            arq.write(nome)        
+        self.estudos.update()
 
     def escrever_json(self, data, filename):
         if not filename.endswith('.json'):
@@ -1086,53 +1532,87 @@ def main(page: ft.Page):
         ),
     )    
 
-    page.navigation_bar = ft.CupertinoNavigationBar(
-            bgcolor= ft.colors.BLACK38,
-            inactive_color=ft.colors.GREY,
-            active_color=ft.colors.GREEN_800,
-            on_change=lambda e: print("Selected tab:", e.control.selected_index),
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="Explore"),
-                ft.NavigationBarDestination(icon=ft.icons.COMMUTE, label="Commute"),
-                ft.NavigationBarDestination(
-                    icon=ft.icons.BOOKMARK_BORDER,
-                    selected_icon=ft.icons.BOOKMARK,
-                    label="Explore",
-                ),
-            ]
-        )
-    
-    page.appbar = ft.AppBar(
-        actions = [],
-        leading = TemaSelectSysten(),
-        title=ft.Text(
-            value = 'Top Bar', 
-            weight='BOLD', 
-            color=ft.colors.GREEN_600,
-            style=ft.TextStyle(
-                shadow = ft.BoxShadow(
-                    blur_radius = 300,
-                    # blur_style = ft.ShadowBlurStyle.OUTER,
-                    color = ft.colors.WHITE
-                ),                
-            )
-            ),
-        shadow_color=ft.colors.BLUE,
-        elevation=8,
-        toolbar_height = 30,
-        bgcolor=ft.colors.BLACK38,
-        automatically_imply_leading=False,
-    )     
 
+    
 
 
 
     saida = Saida(page)
-    print = saida.pprint 
+    # print = saida.pprint 
     ConfirmarSaida(page)
-    Resize(page)
+    # Resize2(page)
+    Resize2(page, exibir=False)
+    page.update()
     p = ClassName(page  = page, pprint = saida.pprint)
+    # page.on_window_event = 
     page.add(p)
+
+    # def example():
+    #     def open_pagelet_end_drawer(e):
+    #         pagelet.end_drawer.open = True
+    #         pagelet.end_drawer.update()
+
+    #     pagelet = ft.Pagelet(
+    #         appbar=ft.AppBar(
+    #             title=ft.Text("Pagelet AppBar title"), bgcolor=ft.colors.AMBER_ACCENT
+    #         ),
+    #         content=ft.Text("Pagelet body"),
+    #         bgcolor=ft.colors.AMBER_100,
+    #         bottom_app_bar=ft.BottomAppBar(
+    #             bgcolor=ft.colors.BLUE,
+    #             shape=ft.NotchShape.CIRCULAR,
+    #             content=ft.Row(
+    #                 controls=[
+    #                     ft.IconButton(icon=ft.icons.MENU, icon_color=ft.colors.WHITE),
+    #                     ft.Container(expand=True),
+    #                     ft.IconButton(icon=ft.icons.SEARCH, icon_color=ft.colors.WHITE),
+    #                     ft.IconButton(icon=ft.icons.FAVORITE, icon_color=ft.colors.WHITE),
+    #                 ]
+    #             ),
+    #         ),
+    #         end_drawer=ft.NavigationDrawer(
+    #             controls=[
+    #                 ft.NavigationDrawerDestination(
+    #                     icon=ft.icons.ADD_TO_HOME_SCREEN_SHARP, label="Item 1"
+    #                 ),
+    #                 ft.NavigationDrawerDestination(
+    #                     icon=ft.icons.ADD_COMMENT, label="Item 2"
+    #                 ),
+    #             ],
+    #         ),
+    #         floating_action_button=ft.FloatingActionButton(
+    #             "Open", on_click=open_pagelet_end_drawer
+    #         ),
+    #         floating_action_button_location=ft.FloatingActionButtonLocation.CENTER_DOCKED,
+    #         # width=400,
+    #         height=400,
+    #     )
+
+    #     return pagelet 
+     
+    # end_drawer=ft.NavigationDrawer(
+    #     # bgcolor = ft.colors.TRANSPARENT,
+    #     controls=[
+    #         # ft.NavigationDrawerDestination(
+    #         #     icon=ft.icons.ADD_TO_HOME_SCREEN_SHARP, 
+    #         #     label="Item 1",
+    #         #     bgcolor = ft.colors.TRANSPARENT
+    #         # ),
+    #         # ft.NavigationDrawerDestination(
+    #         #     icon=ft.icons.ADD_COMMENT, label="Item 2"
+    #         # ),
+    #         ft.Container(bgcolor='amber')
+    #     ],
+    # )  
+    # def open_pagelet_end_drawer(e):
+    #     end_drawer.open = True
+    #     end_drawer.update()
+
+    # page.drawer = end_drawer
+
+    # c = ft.Row([ft.Text('meu pau') for i in range(50)], expand = True, scroll=ft.ScrollMode.AUTO, on_scroll=open_pagelet_end_drawer)   
+    # btn = ft.FilledButton('barra', on_click=open_pagelet_end_drawer)
+    # page.add(c, btn)
 
 if __name__ == '__main__': 
     ft.app(target=main)
