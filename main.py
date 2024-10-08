@@ -1229,7 +1229,7 @@ class ClassName(ft.Row):
                 
                 leading = TemaSelectSysten(),
                 title=ft.Text(
-                    value = 'Top Bar', 
+                    value = '', 
                     weight='BOLD', 
                     color=ft.colors.GREEN_600,
                     style=ft.TextStyle(
@@ -1498,7 +1498,7 @@ class ClassName(ft.Row):
 
 def main(page: ft.Page):
     # Definindo o titulo da pagina
-    page.title = 'Título'
+    page.title = 'Estudo de Guitarra'
     page.window.width = 500  # Define a largura da janela como 800 pixels
     page.window.height = 385  # 
     page.theme_mode = ft.ThemeMode.DARK
