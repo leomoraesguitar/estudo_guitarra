@@ -3,6 +3,15 @@
 import flet as ft
 import os
 import json
+from DatabaseManager import DatabaseManager
+from dotenv import load_dotenv
+from time import sleep
+import os
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
+# Acessa a variável de ambiente
+connection_string = os.getenv("MYSQL_CONNECTION_STRING")
 
 #rciar uma janela para edtar o json dos dados
 
@@ -11,7 +20,7 @@ class ConfirmarSaidaeResize:
     def __init__(self,page, funcao = None, exibir = True):
         super().__init__()
         self.page = page
-        self.funcao = funcao
+        self.funcao = funcao        
         self.confirm_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("Confirme!"),
@@ -747,36 +756,36 @@ class TemaSelectSysten(ft.IconButton):
         return [attr for attr in dir(classe) if not attr.startswith('__')]
 
 
-class Verificar_pasta:
-    def __init__(self,pastalocal = 'Guitarra'):
-        self.pastalocal = pastalocal
-        self.verificar_pasta()
+# class Verificar_pasta:
+#     def __init__(self,pastalocal = 'Guitarra'):
+#         self.pastalocal = pastalocal
+#         self.verificar_pasta()
 
-    def verificar_pasta(self):
-        user_profile = os.environ.get('USERPROFILE')
-        # print(user_profile)
-        if not user_profile:
-            # return False  # USERPROFILE não está definido
-            self.local = None
+#     def verificar_pasta(self):
+#         user_profile = os.environ.get('USERPROFILE')
+#         # print(user_profile)
+#         if not user_profile:
+#             # return False  # USERPROFILE não está definido
+#             self.local = None
 
-        caminho = os.path.join(user_profile, self.pastalocal)
+#         caminho = os.path.join(user_profile, self.pastalocal)
         
-        if os.path.exists(caminho):
-            self.local = caminho
-            # return self.caminho
-        else:
-            os.mkdir(caminho)
-            # print(caminho)
-            if os.path.exists(caminho):
-                self.local = caminho
-                # return self.caminho
-            # else:
-                # return None
+#         if os.path.exists(caminho):
+#             self.local = caminho
+#             # return self.caminho
+#         else:
+#             os.mkdir(caminho)
+#             # print(caminho)
+#             if os.path.exists(caminho):
+#                 self.local = caminho
+#                 # return self.caminho
+#             # else:
+#                 # return None
     
 
-    def caminho(self, nome):
-        # self.verificar_pasta()
-        return os.path.join(self.local, nome)
+#     def caminho(self, nome):
+#         # self.verificar_pasta()
+#         return os.path.join(self.local, nome)
 
 
 
@@ -836,14 +845,14 @@ class Estudo(ft.Container):
     def __init__(self,                
         Ano = None,
         Mês = None,
-        item_de_estudo = None,
-        técnica = None,
-        Articulação = None,
-        tempo = None,
-        NOTAS_TEMPO = None,
-        meta = None, 
-        bpm_semana = None,
         dias = [None for i in range(32)],
+        meta = None, 
+        Articulação = None,
+        técnica = None,
+        bpm_semana = None,
+        NOTAS_TEMPO = None,
+        tempo = None,
+        item_de_estudo = None,
         func = None,               
         ):
         super().__init__()
@@ -853,15 +862,15 @@ class Estudo(ft.Container):
         self.func = func
 
 
-        self.Ano = MeuCampoTexto(nome = Ano, width = larguras.get("Ano", 80), on_change = self.Savar)
-        self.Mês = MeuCampoTexto(nome = Mês, width = larguras.get("Mês", 80), on_change = self.Savar)
-        self.item_de_estudo = MeuCampoTexto(nome = item_de_estudo, width = larguras.get("item_de_estudo", 80), on_change = self.Savar)
-        self.técnica = MeuCampoTexto(nome = técnica, width = larguras.get("técnica", 80), on_change = self.Savar)
-        self.Articulação = MeuCampoTexto(nome = Articulação, width = larguras.get("Articulação", 80), on_change = self.Savar)
-        self.tempo = MeuCampoTexto(nome = tempo, width = larguras.get("tempo", 80), on_change = self.Savar)
-        self.NOTAS_TEMPO = MeuCampoTexto(nome = NOTAS_TEMPO, width = larguras.get("NOTAS_TEMPO", 80), on_change = self.Savar)
-        self.meta = MeuCampoTexto(nome = meta, width = larguras.get("meta", 80), on_change = self.Savar)
-        self.bpm_semana = MeuCampoTexto(nome = bpm_semana, width = larguras.get("bpm_semana", 80), on_change = self.Savar)
+        self.Ano = MeuCampoTexto(nome = Ano, width = larguras.get("Ano", 80))
+        self.Mês = MeuCampoTexto(nome = Mês, width = larguras.get("Mês", 80))
+        self.item_de_estudo = MeuCampoTexto(nome = item_de_estudo, width = larguras.get("item_de_estudo", 80))
+        self.técnica = MeuCampoTexto(nome = técnica, width = larguras.get("técnica", 80))
+        self.Articulação = MeuCampoTexto(nome = Articulação, width = larguras.get("Articulação", 80))
+        self.tempo = MeuCampoTexto(nome = tempo, width = larguras.get("tempo", 80))
+        self.NOTAS_TEMPO = MeuCampoTexto(nome = NOTAS_TEMPO, width = larguras.get("NOTAS_TEMPO", 80))
+        self.meta = MeuCampoTexto(nome = meta, width = larguras.get("meta", 80))
+        self.bpm_semana = MeuCampoTexto(nome = bpm_semana, width = larguras.get("bpm_semana", 80))
 
 
         self.velocidade_palhetada = self.MeuCampoTexto1(width=larguras["velocidade_palhetada"])
@@ -953,13 +962,15 @@ class Estudo(ft.Container):
             except:
                 pass 
 
-        try:
-            # print(e.control.data)
-            if e.control.data == 'dias':
-                if self.func:
-                    self.func(e)
-        except:
-            pass 
+
+        #salvar alteração dos bpm
+        # try:
+        #     # print(e.control.data)
+        #     if e.control.data == 'dias':
+        #         if self.func:
+        #             self.func(e)
+        # except:
+        #     pass 
 
 
 
@@ -1012,6 +1023,8 @@ class ClassName(ft.Row):
         self.scroll = ft.ScrollMode.AUTO 
         # self.on_scroll = self.Ocultar
         self.vertical_alignment = ft.CrossAxisAlignment.START
+
+        self.db = DatabaseManager(connection_string, 'estudoguitarra', pprint=self.pprint)
         self.nomes_colunas = [
             'Ano', 
             'Mês', 
@@ -1034,9 +1047,9 @@ class ClassName(ft.Row):
             weight = 'BOLD',
         )
 
-        self.caminho_arquivo = Verificar_pasta('Guitarra').caminho('estudoguitarra.json')
+        # self.caminho_arquivo = Verificar_pasta('Guitarra').caminho('estudoguitarra.json')
         self.arquiv = self.ler_json(
-            filename = self.caminho_arquivo,
+            user_id = 1,
             default={
                 "manu": {
                     "0": {
@@ -1637,8 +1650,19 @@ class ClassName(ft.Row):
     def Appbar(self, mostrar = True): 
         if mostrar:   
             self.page.appbar = ft.AppBar(
-                actions = [           
+                actions = [    
+                    ft.FilledButton(
+                        text = 'Salvar',
+                        height=20,
+                        data = 'dias',
+                        style=ft.ButtonStyle(
+                            padding=ft.Padding(4,0,4,0)
+                        ),
+                        on_click=self.Salvar
+                        
+                    ),                           
                     self.drop_estudos,
+
                     ft.FilledButton(
                         text = 'Add. linha',
                         height=20,
@@ -1882,19 +1906,23 @@ class ClassName(ft.Row):
                 dic['visiv'].append(False)
 
 
-
-
-
         if e.control.data and e.control.data != 'dias':
             nome = e.control.data
         else:
             nome = self.drop_estudos.value
         self.arquiv = self.ler_json(
-            filename = self.caminho_arquivo,
+            user_id = 1,
 
             )  
         self.arquiv[nome] = dic        
-        self.escrever_json(self.arquiv, self.caminho_arquivo)
+        # self.escrever_json(self.arquiv, self.caminho_arquivo)
+        sleep(0.7)
+        self.db.EditarJson(
+            user_id=1, 
+            novos_dados_json=self.arquiv,
+            tabela = 'estudoguitarra'
+        )
+
         # print('dados salvos')
         # print({'padrão':dic})
 
@@ -1914,7 +1942,7 @@ class ClassName(ft.Row):
         with open(filename, 'w') as f:
             json.dump(data, f, indent=4)
 
-    def ler_json(self, filename, default=None):
+    def ler_json2(self, filename, default=None):
         if not filename.endswith('.json'):
             filename += '.json'
         try:
@@ -1927,6 +1955,13 @@ class ClassName(ft.Row):
                 pass
             return default or {}
 
+
+    def ler_json(self, user_id = 1, default=None):
+        r = self.db.LerJson(user_id=user_id)
+        if isinstance(r, dict):
+            return r
+        else:
+            return default or {}     
 
 def main(page: ft.Page):
     # Definindo o titulo da pagina
@@ -2004,17 +2039,16 @@ def main(page: ft.Page):
     )    
 
 
-    
-
-
-
     saida = Saida(page)
     # print = saida.pprint 
-    ConfirmarSaidaeResize(page,exibir=False)
     # Resize2(page)
     # Resize(page, exibir=False)
     page.update()
     p = ClassName(page  = page, pprint = saida.pprint)
+    def sair(e):
+        p.Salvar(e)
+        p.db.fechar_conexao(e)
+    ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
     # page.on_window_event = 
     page.add(p)
 
