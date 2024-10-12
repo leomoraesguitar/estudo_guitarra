@@ -192,9 +192,9 @@ class Saida:
 class TemaSelectSysten(ft.IconButton):
     def __init__(self):
         super().__init__()    
-        self.pastalocal = 'TEmas_flet'
+        self.pastalocal = 'assets'
         self.verificar_pasta()
-       
+        self.col = 2
         self.EditarTema = self.JanelaEditarTema()
         self.icon = ft.icons.PALETTE
         self.sair = ft.FilledTonalButton('Sair', on_click=self.RestaurarJanela)
@@ -274,13 +274,14 @@ class TemaSelectSysten(ft.IconButton):
 
 
     def verificar_pasta(self):
-        user_profile = os.environ.get('USERPROFILE')
+        # user_profile = os.environ.get('USERPROFILE')
         # print(user_profile)
-        if not user_profile:
-            # return False  # USERPROFILE não está definido
-            self.local = None
+        # if not user_profile:
+        #     # return False  # USERPROFILE não está definido
+        #     self.local = None
 
-        caminho = os.path.join(user_profile, self.pastalocal)
+        # caminho = os.path.join(user_profile, self.pastalocal)
+        caminho = self.pastalocal
         
         if os.path.exists(caminho):
             self.local = caminho
@@ -299,13 +300,34 @@ class TemaSelectSysten(ft.IconButton):
         return os.path.join(self.local, nome)
 
 
+    def Caixa(self, ct):
+        return ft.Container(
+            content = ct,
+            shadow=ft.BoxShadow(
+                blur_radius = 300,
+                blur_style = ft.ShadowBlurStyle.OUTER,
+                color = ft.colors.with_opacity(0.5,ft.colors.CYAN)
+            ),
+            border= ft.border.all(3, ft.colors.CYAN_500),
+            border_radius=8,
+            # alignment=ft.Alignment(0, 0),
+            expand_loose = True,
+            padding= 8,
+            # width=600,
+            # image_fit= ft.ImageFit.COVER,   
+            image= ft.DecorationImage(
+                src =  "carregamento.png",  # URL da imagem de fundo
+                fit = ft.ImageFit.COVER
+            )
+        ) 
+
     def Edit(self, e):
         if not self.em_edicao:
             self.em_edicao = True
             self.tamanho_old = self.page.window.width,self.page.window.height
-            self.page.window.width = 550
+            self.page.window.width = 700
             self.page.window.height = 750
-            self.page.controls = [ft.ListView([self.EditarTema,self.sair], expand=True)]
+            self.page.controls = [self.Caixa(ft.ListView([self.EditarTema,self.sair], width = 700, expand=True))]
             self.page.update()
 
     def RestaurarJanela(self, e):
@@ -365,16 +387,16 @@ class TemaSelectSysten(ft.IconButton):
 
         ]
         self.funcoes = {
-            'primary': 'texto principal, fundo filledbutton, texto outlinedbutton, slider,  preenchimento do switch e checkbox, icone,  texto do elevatebuton',
-            'on_primary': 'texto filledbutton e bolinha do swicth com True',
-            'on_secondary_container': 'texto filledtonalbutton',
-            'outline': 'borda do outliedbutton',
-            'shadow': 'sombras',
-            'on_surface_variant': 'labels, cor da caixa do checkbox e cor do check do popMenubutton',
-            'surface_variant': 'slider e fundo do texfield e do dropbox',
-            'primary_container': 'HOVERED da bolinha do switch',
-            'on_surface': 'HOVERED do checkbox e cor dos items do popmenubuton',
-            'surface': 'cor de fundo',
+            'primary': 'primary: texto principal, fundo filledbutton, texto outlinedbutton, slider,  preenchimento do switch e checkbox, icone,  texto do elevatebuton',
+            'on_primary': 'on_primary: texto filledbutton e bolinha do swicth com True',
+            'on_secondary_container': 'on_secondary_container: texto filledtonalbutton',
+            'outline': 'outline: borda do outliedbutton',
+            'shadow': 'shadow: sombras',
+            'on_surface_variant': 'on_surface_variant: labels, cor da caixa do checkbox e cor do check do popMenubutton',
+            'surface_variant': 'surface_variant: slider e fundo do texfield e do dropbox',
+            'primary_container': 'primary_container: HOVERED da bolinha do switch',
+            'on_surface': 'on_surface: HOVERED do checkbox e cor dos items do popmenubuton',
+            'surface': 'surface: cor de fundo',
             'color_scheme_seed':'color_scheme_seed',
 
         }
@@ -532,7 +554,7 @@ class TemaSelectSysten(ft.IconButton):
 
                 ],
                 
-                columns={'xs':48, 'sm':60 },
+                columns={'xs':36, 'sm':48 },
                 spacing = 0,
                 run_spacing = 10,
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -678,7 +700,10 @@ class TemaSelectSysten(ft.IconButton):
         self.nome_tema.clean()
         self.linha_salve.visible = False
         self.btn_save.visible = True
-        self.update()
+
+        self.nome_tema.update()
+        self.linha_salve.update()
+        self.btn_save.update()
 
     def escrever_json(self, data, filename):
         if not filename.endswith('.json'):
@@ -774,6 +799,7 @@ class TemaSelectSysten(ft.IconButton):
 
     def Atributos(self, classe):
         return [attr for attr in dir(classe) if not attr.startswith('__')]
+
 
 
 # class Verificar_pasta:
@@ -1639,6 +1665,7 @@ class ClassName(ft.Row):
 
         self.controls = [ft.Container(content = self.lgg, alignment=ft.alignment.center,  width=500,expand = True)]
 
+
         for n,i in enumerate(self.estudos.controls):
             i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
 
@@ -1650,8 +1677,8 @@ class ClassName(ft.Row):
         self.drop_estudos = ft.Dropdown(
             hint_text='Lista de Estudos',
             value = self.estudo_mais_recente,
-            expand_loose = True,
-            # width=200,
+            # expand_loose = True,
+            width=200,
             
             padding = ft.Padding(0,0,0,0),
             height = 50,
@@ -1692,7 +1719,8 @@ class ClassName(ft.Row):
     def Appbar(self, mostrar = True): 
         if mostrar:   
             self.page.appbar = ft.AppBar(
-                actions = [    
+                actions = [
+                    TemaSelectSysten(),  
                     ft.FilledButton(
                         text = 'Salvar',
                         height=20,
@@ -1725,7 +1753,8 @@ class ClassName(ft.Row):
                     ),
                 ],
                 
-                leading = TemaSelectSysten(),
+                
+                # leading = TemaSelectSysten(),
                 title=ft.Text(
                     value = '', 
                     weight='BOLD', 
@@ -1785,6 +1814,8 @@ class ClassName(ft.Row):
 
 
         # self.Ocultacao(False)
+        # self.Entrar(1)
+
 
     def Ocultar(self,e):
         e.control.data = not e.control.data
