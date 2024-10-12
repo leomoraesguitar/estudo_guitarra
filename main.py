@@ -1039,9 +1039,9 @@ class Estudo(ft.Container):
     #     self._bgcolor = bgcolor
 
 class ClassName(ft.Row):
-    def __init__(self,page, pprint):
+    def __init__(self, pprint):
         super().__init__()
-        self.page = page
+
         self.pprint = pprint
         self.expand = True
         self.run_spacing = 0
@@ -2090,11 +2090,11 @@ def main(page: ft.Page):
     # Resize2(page)
     # Resize(page, exibir=False)
     page.update()
-    p = ClassName(page  = page, pprint = saida.pprint)
+    p = ClassName( pprint = saida.pprint)
     def sair(e):
         p.Salvar(e)
         p.db.fechar_conexao(e)
-    ConfirmarSaidaeResize(p.page,exibir=False, funcao=sair, width_max=723,height_max=656)
+    ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_max=723,height_max=656)
     # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
     page.update()
     # page.on_window_event = 
