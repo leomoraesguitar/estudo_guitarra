@@ -2003,6 +2003,8 @@ def main(page: ft.Page):
     page.window.width = 500  # Define a largura da janela como 800 pixels
     page.window.height = 385  # 
     page.theme_mode = ft.ThemeMode.DARK
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     page.theme = ft.Theme(
         scrollbar_theme = ft.ScrollbarTheme(
             thickness = {
@@ -2085,7 +2087,7 @@ def main(page: ft.Page):
     # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
     ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_max=723,height_max=656)
     # page.on_window_event = 
-    page.add(p)
+    page.add(Login())
 
     # def example():
     #     def open_pagelet_end_drawer(e):

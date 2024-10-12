@@ -30,7 +30,7 @@ class Login(ft.Container):
 
 
         self.username_input = ft.TextField(label="Usuário", width=300, border_color=ft.colors.BLUE_400)
-        self.password_input = ft.TextField(label="Senha", password=True, width=300, border_color=ft.colors.BLUE_400)
+        self.password_input = ft.TextField(label="Senha", password=True, width=300, border_color=ft.colors.BLUE_400, on_submit=self.login_clicked)
         self.login_button = ft.ElevatedButton(text="Login", on_click=self.login_clicked)
 
         self.content =  ft.Column(
