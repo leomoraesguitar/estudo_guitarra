@@ -79,7 +79,7 @@ class ConfirmarSaidaeResize:
         if valores[1]< self.height_max:
             valores[1] = self.height_max
         with open('assets/tamanho.txt', 'w') as arq:
-            arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]},')
+            arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
 
   
 
@@ -87,15 +87,18 @@ class ConfirmarSaidaeResize:
         try:
             with open('assets/tamanho.txt', 'r') as arq:
                 po = arq.readline()
-            po = po.split(',')
-            po = [int(float(i)) for i in po]  
+            p1 = po.split(',')
+            p = [int(float(i)) for i in p1]
+            po = p[:4] 
             for i in po:
                 if i < 0:
                     i = 0
             if po[1]< self.height_max:
                 po[1] = self.height_max       
             self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
+            print('acerto')
         except:
+            print('erro!')
             with open('assets/tamanho.txt', 'w') as arq:
                 arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
             self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = 500,self.height_max,0,0
@@ -1671,6 +1674,8 @@ class ClassName(ft.Row):
         self.Appbar(mostrar=True)
         self.navigation_bar(mostrar = False)
 
+        # ConfirmarSaidaeResize(self.page,exibir=False,  width_max=723,height_max=656)
+
         self.page.update()
         self.update()
 
@@ -2084,77 +2089,12 @@ def main(page: ft.Page):
     def sair(e):
         p.Salvar(e)
         p.db.fechar_conexao(e)
+    ConfirmarSaidaeResize(p.page,exibir=False, funcao=sair, width_max=723,height_max=656)
     # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
-    ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_max=723,height_max=656)
+    page.update()
     # page.on_window_event = 
-    page.add(Login())
+    page.add(p)
 
-    # def example():
-    #     def open_pagelet_end_drawer(e):
-    #         pagelet.end_drawer.open = True
-    #         pagelet.end_drawer.update()
-
-    #     pagelet = ft.Pagelet(
-    #         appbar=ft.AppBar(
-    #             title=ft.Text("Pagelet AppBar title"), bgcolor=ft.colors.AMBER_ACCENT
-    #         ),
-    #         content=ft.Text("Pagelet body"),
-    #         bgcolor=ft.colors.AMBER_100,
-    #         bottom_app_bar=ft.BottomAppBar(
-    #             bgcolor=ft.colors.BLUE,
-    #             shape=ft.NotchShape.CIRCULAR,
-    #             content=ft.Row(
-    #                 controls=[
-    #                     ft.IconButton(icon=ft.icons.MENU, icon_color=ft.colors.WHITE),
-    #                     ft.Container(expand=True),
-    #                     ft.IconButton(icon=ft.icons.SEARCH, icon_color=ft.colors.WHITE),
-    #                     ft.IconButton(icon=ft.icons.FAVORITE, icon_color=ft.colors.WHITE),
-    #                 ]
-    #             ),
-    #         ),
-    #         end_drawer=ft.NavigationDrawer(
-    #             controls=[
-    #                 ft.NavigationDrawerDestination(
-    #                     icon=ft.icons.ADD_TO_HOME_SCREEN_SHARP, label="Item 1"
-    #                 ),
-    #                 ft.NavigationDrawerDestination(
-    #                     icon=ft.icons.ADD_COMMENT, label="Item 2"
-    #                 ),
-    #             ],
-    #         ),
-    #         floating_action_button=ft.FloatingActionButton(
-    #             "Open", on_click=open_pagelet_end_drawer
-    #         ),
-    #         floating_action_button_location=ft.FloatingActionButtonLocation.CENTER_DOCKED,
-    #         # width=400,
-    #         height=400,
-    #     )
-
-    #     return pagelet 
-     
-    # end_drawer=ft.NavigationDrawer(
-    #     # bgcolor = ft.colors.TRANSPARENT,
-    #     controls=[
-    #         # ft.NavigationDrawerDestination(
-    #         #     icon=ft.icons.ADD_TO_HOME_SCREEN_SHARP, 
-    #         #     label="Item 1",
-    #         #     bgcolor = ft.colors.TRANSPARENT
-    #         # ),
-    #         # ft.NavigationDrawerDestination(
-    #         #     icon=ft.icons.ADD_COMMENT, label="Item 2"
-    #         # ),
-    #         ft.Container(bgcolor='amber')
-    #     ],
-    # )  
-    # def open_pagelet_end_drawer(e):
-    #     end_drawer.open = True
-    #     end_drawer.update()
-
-    # page.drawer = end_drawer
-
-    # c = ft.Row([ft.Text('meu pau') for i in range(50)], expand = True, scroll=ft.ScrollMode.AUTO, on_scroll=open_pagelet_end_drawer)   
-    # btn = ft.FilledButton('barra', on_click=open_pagelet_end_drawer)
-    # page.add(c, btn)
 
 if __name__ == '__main__': 
     ft.app(target=main)
