@@ -3,6 +3,7 @@
 import flet as ft
 import os
 import json
+from login import Login
 from DatabaseManager import DatabaseManager
 from dotenv import load_dotenv
 from time import sleep
@@ -12,15 +13,20 @@ import os
 load_dotenv()
 # Acessa a variável de ambiente
 connection_string = os.getenv("MYSQL_CONNECTION_STRING")
+login = os.getenv("ADM_ESTUDO_GUITARRA")
+
+
 
 #rciar uma janela para edtar o json dos dados
 
 
 class ConfirmarSaidaeResize:
-    def __init__(self,page, funcao = None, exibir = True):
+    def __init__(self,page, funcao = None, exibir = True, width_max = None, height_max = None):
         super().__init__()
         self.page = page
-        self.funcao = funcao        
+        self.funcao = funcao
+        self.width_max = width_max
+        self.height_max = height_max
         self.confirm_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("Confirme!"),
@@ -66,8 +72,14 @@ class ConfirmarSaidaeResize:
         if self.exibir:
             self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
             self.pw.update()
+        valores = [self.page.window.width,self.page.window.height,self.page.window.top,self.page.window.left]
+        for i in valores:
+            if i < 0:
+                i = 0
+        if valores[1]< self.height_max:
+            valores[1] = self.height_max
         with open('assets/tamanho.txt', 'w') as arq:
-            arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+            arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]},')
 
   
 
@@ -75,13 +87,18 @@ class ConfirmarSaidaeResize:
         try:
             with open('assets/tamanho.txt', 'r') as arq:
                 po = arq.readline()
+            po = po.split(',')
+            po = [int(float(i)) for i in po]  
+            for i in po:
+                if i < 0:
+                    i = 0
+            if po[1]< self.height_max:
+                po[1] = self.height_max       
+            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
         except:
             with open('assets/tamanho.txt', 'w') as arq:
-                arq.write(f'{0},{0},{0},{0}')
-        po = po.split(',')
-        po = [int(float(i)) for i in po]
-        
-        self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
+                arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = 500,self.height_max,0,0
 
 
 
@@ -1534,13 +1551,7 @@ class ClassName(ft.Row):
             ]
         )
 
-        self.page.floating_action_button = ft.FloatingActionButton(
-            text = 'Exibir',
-            data = False,
-            bgcolor=ft.colors.SURFACE_VARIANT,
-
-            on_click=self.Ocultar
-        )
+        
         self.estudos = ft.Column(
             expand = True,
             scroll = ft.ScrollMode.AUTO,
@@ -1602,7 +1613,8 @@ class ClassName(ft.Row):
                 for i in self.salvos                                                                                                                                                                                          
             ]
         ) 
-        self.controls = [
+        self.lgg = Login(func=self.Entrar)
+        self.controls1 = [
             ft.Column(
                 expand = True,
                 # scroll = ft.ScrollMode.AUTO,
@@ -1616,6 +1628,8 @@ class ClassName(ft.Row):
                 ] 
             )
         ]
+
+        self.controls = [self.lgg]
 
         for n,i in enumerate(self.estudos.controls):
             i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
@@ -1644,8 +1658,26 @@ class ClassName(ft.Row):
             on_change=self.Carregar
         )
     
+    def Entrar(self, e):
+        self.controls = self.controls1
+        self.page.floating_action_button = ft.FloatingActionButton(
+            text = 'Exibir',
+            data = False,
+            bgcolor=ft.colors.SURFACE_VARIANT,
+
+            on_click=self.Ocultar
+        )
+
         self.Appbar(mostrar=True)
         self.navigation_bar(mostrar = False)
+
+        self.page.update()
+        self.update()
+
+        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
+            i.content.controls[0].value = j
+     
+        self.Ocultacao(False)
     
     def Appbar(self, mostrar = True): 
         if mostrar:   
@@ -1740,7 +1772,9 @@ class ClassName(ft.Row):
         #     for i in k.content.controls[15:]:                  
         #         i.visible = True            
 
-        self.Ocultacao(False)
+
+
+        # self.Ocultacao(False)
 
     def Ocultar(self,e):
         e.control.data = not e.control.data
@@ -2048,7 +2082,8 @@ def main(page: ft.Page):
     def sair(e):
         p.Salvar(e)
         p.db.fechar_conexao(e)
-    ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
+    # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
+    ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_max=723,height_max=656)
     # page.on_window_event = 
     page.add(p)
 
