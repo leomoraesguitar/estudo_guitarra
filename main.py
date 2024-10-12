@@ -1637,7 +1637,7 @@ class ClassName(ft.Row):
             )
         ]
 
-        self.controls = [ft.Container(content = ft.Text('mweu ovo'), alignment=ft.alignment.center, bgcolor='red', expand = True)]
+        self.controls = [ft.Container(content = self.lgg, alignment=ft.alignment.center,  width=500,expand = True)]
 
         for n,i in enumerate(self.estudos.controls):
             i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
