@@ -23,7 +23,8 @@ class Criar_exe:
                 PyInstaller.__main__.run([
                             i,
                             '--onefile',
-                            '--windowed'
+                            '--windowed',
+                            ''
                         ])
 
             self.limpar_pasta('build')

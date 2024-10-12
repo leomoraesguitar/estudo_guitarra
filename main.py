@@ -5,9 +5,9 @@ import os
 import json
 from login import Login
 from DatabaseManager import DatabaseManager
-from dotenv import load_dotenv
 from time import sleep
 import os
+from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
