@@ -96,9 +96,9 @@ class ConfirmarSaidaeResize:
             if po[1]< self.height_max:
                 po[1] = self.height_max       
             self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
-            print('acerto')
+            # print('acerto')
         except:
-            print('erro!')
+            # print('erro!')
             with open('assets/tamanho.txt', 'w') as arq:
                 arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
             self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = 500,self.height_max,0,0
@@ -840,17 +840,22 @@ def Calc_larg(i):
     else:
         return larguras.get(i, 80) 
 
-def MeuCampoTexto(nome = None, width = None,on_change = None):
+def MeuCampoTexto(nome = None, width = None,on_change = None, bold = False):
     if width:
         larg = width
     else:
         larg = Calc_larg(nome)
+    if bold:
+        b = "bold"
+    else: 
+        b = "normal"
     return ft.TextField(
         value = nome,
         width=larg,
         content_padding=ft.Padding(4,0,4,0),
         # height=35,
         # dense=True,
+        text_style=ft.TextStyle(weight=b),
         text_align=ft.TextAlign.CENTER,
         multiline=True,
         max_lines = 2,
@@ -884,7 +889,7 @@ class Estudo(ft.Container):
 
         self.Ano = MeuCampoTexto(nome = Ano, width = larguras.get("Ano", 80))
         self.Mês = MeuCampoTexto(nome = Mês, width = larguras.get("Mês", 80))
-        self.item_de_estudo = MeuCampoTexto(nome = item_de_estudo, width = larguras.get("item_de_estudo", 80))
+        self.item_de_estudo = MeuCampoTexto(nome = item_de_estudo, width = larguras.get("item_de_estudo", 80), bold=True)
         self.técnica = MeuCampoTexto(nome = técnica, width = larguras.get("técnica", 80))
         self.Articulação = MeuCampoTexto(nome = Articulação, width = larguras.get("Articulação", 80))
         self.tempo = MeuCampoTexto(nome = tempo, width = larguras.get("tempo", 80))
@@ -1632,7 +1637,7 @@ class ClassName(ft.Row):
             )
         ]
 
-        self.controls = [self.lgg]
+        self.controls = [ft.Container(content = ft.Text('mweu ovo'), alignment=ft.alignment.center, bgcolor='red', expand = True)]
 
         for n,i in enumerate(self.estudos.controls):
             i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
