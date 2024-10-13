@@ -28,26 +28,67 @@ class Login(ft.Container):
         self.senha = l[1]
 
 
-        self.username_input = ft.TextField(label="Usuário", width=300, border_color=ft.colors.BLUE_400)
-        self.password_input = ft.TextField(label="Senha", password=True, width=300, border_color=ft.colors.BLUE_400, on_submit=self.login_clicked)
+        self.username_input = ft.TextField(label="Usuário",  border_color=ft.colors.BLUE_400)
+        self.password_input = ft.TextField(label="Senha", password=True, border_color=ft.colors.BLUE_400, on_submit=self.login_clicked)
         self.login_button = ft.ElevatedButton(text="Login", on_click=self.login_clicked)
         
-        self.content =  ft.Column(
-            [
-                ft.Text("Por favor, faça login", size=20, weight=ft.FontWeight.BOLD),
-                self.username_input,
-                self.password_input,
-                self.login_button,
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            tight=True,
-        )
-        
-    # def did_mount(self):
-    #     ConfirmarSaidaeResize(self.page,exibir=False,  width_max=723,height_max=656)
 
-    def login_clicked(self, e):
+    def did_mount(self):
+        # ConfirmarSaidaeResize(self.page,exibir=False,  width_max=723,height_max=656)
+        try:
+            l = False
+            l = self.page.client_storage.get("login")
+            # print(l)
+            if l:
+                if self.func:
+                    self.func(2)
+                    # pass
+            else:
+                self.content =  ft.Column(
+                [
+                    ft.ResponsiveRow(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        columns = 23,
+                        controls = [
+                            ft.Text("Por favor, faça login", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
+                            self.username_input,
+                            self.password_input,
+                            self.login_button,
+
+                        ]
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+                )
+                self.update()
+                        
+        except:
+            self.content =  ft.Column(
+                [
+                    ft.ResponsiveRow(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        columns = 23,
+                        controls = [
+                            ft.Text("Por favor, faça login", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
+                            self.username_input,
+                            self.password_input,
+                            self.login_button,
+
+                        ]
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+            )
+            self.update()
+        
+
+    async def login_clicked(self, e):
         username = self.username_input.value 
         password = self.password_input.value       
 
@@ -56,6 +97,7 @@ class Login(ft.Container):
             # dialog.open = True
             # self.page.overlay.append(dialog)
             # self.page.update()
+            await self.page.client_storage.set_async("login", True)
             if self.func:
                 self.func(e)
         else:

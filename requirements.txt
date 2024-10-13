@@ -1,2 +1,5 @@
 flet
 mysql-connector-python
+python-dotenv
+temaselectsysten
+bancodadosmysql
