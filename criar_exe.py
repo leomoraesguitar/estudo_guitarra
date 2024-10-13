@@ -20,12 +20,21 @@ class Criar_exe:
                     sp
                 ])  
             elif i.endswith('.py'):
-                PyInstaller.__main__.run([
+                if path.exists('assets'):
+                    PyInstaller.__main__.run([
                             i,
                             '--onefile',
                             '--windowed',
+                            '--add-data "assets:assets"',
                             ''
                         ])
+                else:
+                    PyInstaller.__main__.run([
+                            i,
+                            '--onefile',
+                            '--windowed',                       
+                            ''
+                        ])                    
 
             self.limpar_pasta('build')
 

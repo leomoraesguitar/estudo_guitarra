@@ -1,6 +1,9 @@
 
 
 import flet as ft
+import sys
+import subprocess
+
 import os
 import json
 from login import Login
@@ -50,8 +53,8 @@ class ConfirmarSaidaeResize:
         self.Ler_dados() 
 
 
-    def window_event(self, e):
-            self.page_resize(e)
+    async def window_event(self, e):
+            await self.page_resize(e)
             if e.data == "close":
                 self.page.overlay.append(self.confirm_dialog)
                 
@@ -69,7 +72,7 @@ class ConfirmarSaidaeResize:
 
 
 
-    def page_resize(self, e):
+    async def page_resize(self, e):
         if self.exibir:
             self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
             self.pw.update()
@@ -79,15 +82,20 @@ class ConfirmarSaidaeResize:
                 i = 0
         if valores[1]< self.height_max:
             valores[1] = self.height_max
-        with open('assets/tamanho.txt', 'w') as arq:
-            arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
+        # with open('assets/tamanho.txt', 'w') as arq:
+        #     arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
+        await self.page.client_storage.set_async("tamanho", f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
+        
 
   
 
     def Ler_dados(self):
         try:
-            with open('assets/tamanho.txt', 'r') as arq:
-                po = arq.readline()
+            # with open('assets/tamanho.txt', 'r') as arq:
+            #     po = arq.readline()
+
+            po = self.page.client_storage.get("tamanho")
+
             p1 = po.split(',')
             p = [int(float(i)) for i in p1]
             po = p[:4] 
@@ -100,8 +108,8 @@ class ConfirmarSaidaeResize:
             # print('acerto')
         except:
             # print('erro!')
-            with open('assets/tamanho.txt', 'w') as arq:
-                arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+            # with open('assets/tamanho.txt', 'w') as arq:
+            #     arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
             self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = 500,self.height_max,0,0
 
 
@@ -117,7 +125,7 @@ class ConfirmarSaidaeResize:
 #         self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
 #         self.pw.update()
 
-
+'''
 class Resize:
     def __init__(self,page, exibir = True):
         self.page = page
@@ -149,7 +157,7 @@ class Resize:
         po = [int(float(i)) for i in po]
         
         self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
-
+'''
 
 class Saida:
     def __init__(self,  page = None):
@@ -1079,7 +1087,7 @@ class ClassName(ft.Row):
         super().__init__()
 
         self.pprint = pprint
-        self.expand = True
+        # self.expand = True
         self.run_spacing = 0
         self.scroll = ft.ScrollMode.AUTO 
         # self.on_scroll = self.Ocultar
@@ -1673,16 +1681,23 @@ class ClassName(ft.Row):
             )
         ]
 
-        self.controls = [ft.Container(content = self.lgg, alignment=ft.alignment.center,  width=500,expand = True)]
-
+        # self.controls = [
+        #     ft.Container(
+        #         content = self.lgg, 
+        #         alignment=ft.alignment.center,  
+        #         # width=1000,
+        #         expand = True,
+        #         image = ft.DecorationImage(
+        #             src =  "git.png",  # URL da imagem de fundo
+        #             fit = ft.ImageFit.FILL
+        #         ),
+        #     )
+        # ]
 
         for n,i in enumerate(self.estudos.controls):
             i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
 
-
-
-
-            
+   
         # print(estudo_mais_recente)
         self.drop_estudos = ft.Dropdown(
             hint_text='Lista de Estudos',
@@ -1706,6 +1721,14 @@ class ClassName(ft.Row):
             on_change=self.Carregar
         )
     
+        self.controls = self.controls1
+
+        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
+            i.content.controls[0].value = j
+     
+        # self.Ocultacao(False)
+
+
     def Entrar(self, e):
         self.controls = self.controls1
         self.page.floating_action_button = ft.FloatingActionButton(
@@ -1724,10 +1747,8 @@ class ClassName(ft.Row):
         self.page.update()
         self.update()
 
-        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
-            i.content.controls[0].value = j
+ 
      
-        self.Ocultacao(False)
     
     def Appbar(self, mostrar = True): 
         if mostrar:   
@@ -1880,10 +1901,18 @@ class ClassName(ft.Row):
         # for k in self.estudos.controls:
         #     for i in k.content.controls[15:]:                  
         #         i.visible = True            
+        self.page.floating_action_button = ft.FloatingActionButton(
+            text = 'Exibir',
+            data = False,
+            bgcolor=ft.colors.SURFACE_VARIANT,
 
-
-
-        # self.Ocultacao(False)
+            on_click=self.Ocultar
+        )
+        self.Appbar(mostrar=True)
+        self.navigation_bar(mostrar = False)
+        self.page.update()
+        self.update()
+        self.Ocultacao(False)
         # self.Entrar(1)
 
 
@@ -1952,13 +1981,15 @@ class ClassName(ft.Row):
 
     def Nome_estudo_mais_recente(self):
         try:
-            with open('assets/nestrec.txt', 'r')as arq:
-                er = arq.readline()
-            return er
+            n = self.db.LerJson(user_id = 0,tabela = "estudoguitarra" )
+            nestrec = n["nestrec"]
+            # with open('assets/nestrec.txt', 'r')as arq:
+            #     nestrec = arq.readline()
+            return nestrec
         except:
-            with open('assets/nestrec.txt', 'w')as arq:
-                arq.write('padrão')
-            return 'padrão'
+            # with open('assets/nestrec.txt', 'w')as arq:
+            #     arq.write('padrão')
+            return 'manu'
 
 
     def Criar_novo_estudo(self, e):
@@ -2077,8 +2108,15 @@ class ClassName(ft.Row):
         lista = self.Gerar_lista_salvos(nome)
         # print(lista)
         self.estudos.controls = [ Estudo(*i)    for i in lista ]
-        with open('nestrec.txt', 'w') as arq:
-            arq.write(nome)        
+        # with open('nestrec.txt', 'w') as arq:
+        #     arq.write(nome)    
+
+        self.db.EditarJson(
+            user_id=0, 
+            novos_dados_json={"nestrec":nome},
+            tabela = 'estudoguitarra'
+        )            
+
         self.estudos.update()
 
     def escrever_json(self, data, filename):
@@ -2196,11 +2234,47 @@ def main(page: ft.Page):
     def sair(e):
         p.Salvar(e)
         p.db.fechar_conexao(e)
+
+        # def MatarProcesso(process_name = "main.exe"):
+        #     comando = f"taskkill /F /IM {process_name}"
+        #     resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
+        #     if resultado.returncode == 0:
+        #         print(f"Processo {process_name} finalizado com sucesso.")
+        #     else:
+        #         print(f"Erro ao finalizar o processo {process_name}: {resultado.stderr}")
+
+
+        # def mt():
+        #     MatarProcesso('main.exe')
+        # def mt1():
+        #     MatarProcesso('flet.exe')
+        # def is_exe():
+        #     return getattr(sys, 'frozen', False)
+
+
+        # if is_exe():
+        #     MatarProcesso('main.exe')
+        #     MatarProcesso('flet.exe')     
+               
     ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_max=723,height_max=656)
     # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
-    page.update()
-    # page.on_window_event = 
-    page.add(p)
+
+    def entrar(e):
+        page.clean()
+        page.add(p)
+        page.update()
+
+    loggg = ft.Container(
+                content = Login(entrar), 
+                alignment=ft.alignment.center,  
+                expand = True,
+                image = ft.DecorationImage(
+                    src =  "git.png",  # URL da imagem de fundo
+                    fit = ft.ImageFit.FILL
+                ),
+            )
+
+    page.add(loggg)
 
 
 if __name__ == '__main__': 
