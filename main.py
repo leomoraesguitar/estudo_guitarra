@@ -1087,7 +1087,7 @@ class ClassName(ft.Row):
         super().__init__()
 
         self.pprint = pprint
-        # self.expand = True
+        self.expand = True
         self.run_spacing = 0
         self.scroll = ft.ScrollMode.AUTO 
         # self.on_scroll = self.Ocultar
