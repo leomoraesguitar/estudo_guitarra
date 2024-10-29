@@ -10,252 +10,10 @@ import string
 load_dotenv()
 
 login = os.getenv("ADM_ESTUDO_GUITARRA")
-
-
-
-# class Login(ft.Container):
-#     def __init__(self, func = None, tipo = 'login'):
-#         super().__init__()
-#         self.func = func
-#         self._tipo = tipo
-#         self.bgcolor = ft.colors.with_opacity(0.8, ft.colors.BLACK)
-#         self.shadow=ft.BoxShadow(
-#                 blur_radius = 300,
-#                 blur_style = ft.ShadowBlurStyle.OUTER,
-#                 color = ft.colors.with_opacity(0.3,ft.colors.CYAN)
-#         )
-#         self.border= ft.border.all(3, ft.colors.CYAN_500)
-#         self.border_radius=12
-#         self.padding= 8
-#         self.width = 250
-#         self.height = 260
-
-#         # with open('assets\senhas.txt', 'r') as arq:
-#         #    self.senhas = arq.read() 
-#         # self.senhas = login.split('\n')
-#         self.senhas = self.ler_json2(r'assets\senhas.json')
-#         # print(self.senhas)
-
-
-#         self.username_input = ft.TextField(
-#             hint_text="Usuário",  
-#             border_color=ft.colors.BLUE_400,
-#             border_radius=15,
-#             dense = True,
-            
-#             helper_style=ft.TextStyle(
-#                 color = '#77bf70'
-#             ),
-#             prefix_icon=ft.icons.PERSON,
-#             keyboard_type=ft.KeyboardType.NAME,
-   
-
-#             prefix_style=ft.TextStyle(
-#                 color = 'primary,0.7'
-#             )
-#         )
-#         self.password_input = ft.TextField(
-#             hint_text="Senha", 
-#             password=True, 
-#             dense = True,
-#             border_color=ft.colors.BLUE_400, 
-#             border_radius=15,
-#             prefix_icon=ft.icons.LOCK,
-#             keyboard_type=ft.KeyboardType.VISIBLE_PASSWORD,   
-#             can_reveal_password=True,         
-#             on_submit=self.login_clicked,
-#         )
-#         self.login_button = ft.ElevatedButton(text="Login", on_click=self.login_clicked)
-#         self.cadastro_button = ft.ElevatedButton(text="Cadastrar", on_click=self.Cadastrar)
-#         valor = False
-
-#         self.salvar_login = ft.Checkbox(
-#             scale=0.8,
-#             label="Salvar",
-#             label_style = ft.TextStyle(
-#                 color=ft.colors.PRIMARY
-#             ),
-#             value = False, 
-#             on_change=self.Chenge_valor_salvar_login,
-#         )
-
-#         self.telalogin = ft.Column(
-#                 [
-#                             ft.Text("Por favor, faça login", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
-#                             self.username_input,
-#                             self.password_input,
-#                             ft.Row([self.login_button,self.salvar_login], alignment='center'),
-#                 ],
-#                 alignment=ft.MainAxisAlignment.CENTER,
-#                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-#                 tight=True,
-#                 )
-        
-
-#         self.telacadastro = ft.Column(
-#                 [
-#                             ft.Text("Crie um Usuário e senha", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
-#                             self.username_input,
-#                             self.password_input,
-#                             ft.Row([self.cadastro_button], alignment='center'),
-#                 ],
-#                 alignment=ft.MainAxisAlignment.CENTER,
-#                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-#                 tight=True,
-#                 )
-        
-#         self.tela = ft.Column(
-#             alignment=ft.MainAxisAlignment.CENTER,
-#             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-#             tight=True,
-#             )
-
-#         if self._tipo == 'login':
-#             self.bgcolor = ft.colors.with_opacity(0.8, ft.colors.BLACK)
-#             self.tela.controls =  [
-#                 ft.Text("Por favor, faça login", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
-#                 self.username_input,
-#                 self.password_input,
-#                 ft.Row([self.login_button,self.salvar_login], alignment='center'),
-#             ]
-     
-#         elif self._tipo == 'cadastro':
-#             self.bgcolor = ft.colors.with_opacity(0.8, ft.colors.BLUE)
-#             self.tela.controls =  [
-#                 ft.Text("Crie um Usuário e senha", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
-#                 self.username_input,
-#                 self.password_input,
-#                 ft.Row([self.cadastro_button], alignment='center'),
-#             ] 
-        
-#         self.content =  self.tela
-
-#     def did_mount(self):
-#         try:
-#             l = False
-#             l = self.page.client_storage.get("login")
-#             v = self.page.client_storage.get("salvar_login")
-#             if l and v:
-#                 self.salvar_login.value = v
-#                 self.salvar_login.update()
-#                 if self.func:   
-#                     # sleep(2)                 
-#                     if v:
-#                         self.func(2)
-#         except:
-#             pass
-
-
-
-#     def valor_salvar_login(self):
-#         try:
-#             v = self.page.client_storage.get("salvar_login")
-#             print('valor', v)
-#             if not v is None:
-#                 return v
-#         except:
-#             return False
-        
-#     async def Chenge_valor_salvar_login(self, e):
-#         await self.page.client_storage.set_async("salvar_login", self.salvar_login.value)
-                              
-#     async def login_clicked(self, e):
-#         username = self.username_input.value 
-#         password = self.password_input.value       
-#         # print(f'{username},{password}')
-#         # print(self.senhas)
-#         if f'{username},{password}' in self.senhas:
-#             dialog = ft.AlertDialog(title=ft.Text("Login bem-sucedido!"))
-#             await self.page.client_storage.set_async("login", True)
-#             e.data = 'logado'
-#             if self.func:
-#                 self.func(e)
-#         else:
-#             dialog = ft.AlertDialog(title=ft.Text("Credenciais inválidas!"))
-
-#             dialog.open = True
-#             self.page.overlay.append(dialog)
-#             self.page.update()
-
-#     def Cadastrar(self, e):
-#         username = self.username_input.value 
-#         password = self.password_input.value       
-#         usuarios = list(self.senhas.keys())
-#         # print(usuarios)
-#         if not username in usuarios:
-#             self.senhas[username] = password
-#             self.escrever_json(self.senhas, 'assets\senhas.json' )
-#             self.telacadastro.controls = [ft.Text(
-#                                             'Cadastro realizado com sucesso!', 
-#                                             weight='BOLD' ,
-#                                             size = 20,
-#                                             text_align='center'
-#                                             )
-#             ]
-#             self.height = 100
-#             self.telacadastro.update()
-#             self.update()
-#             sleep(1)
-#             e.data = 'login'
-#             # await self.page.client_storage.set_async("login", True)
-#             if self.func:
-#                 self.func(e)
-#         else:
-#             # dialog = ft.AlertDialog(title=ft.Text("Usuário já cadastrado"))
-#             self.username_input.helper_text = 'Usuário já cadastrado'
-#             self.username_input.update()
-#             # dialog.open = True
-#             # self.page.overlay.append(dialog)
-#             # self.page.update()
-
-#     def escrever_json(self, data, filename):
-#         if not filename.endswith('.json'):
-#             filename += '.json'
-#         with open(filename, 'w') as f:
-#             json.dump(data, f, indent=4)
-
-#     def ler_json2(self, filename, default=None):
-#         if not filename.endswith('.json'):
-#             filename += '.json'
-#         try:
-#             with open(filename, 'r') as f:
-#                 return json.load(f)
-#         except (FileNotFoundError, json.JSONDecodeError):
-#             try:
-#                 self.escrever_json(default, filename)
-#             except:
-#                 pass
-#             return default or {}
-
-#     @property
-#     def tipo(self):
-#         return self._tipo
-    
-#     @tipo.setter
-#     def tipo(self, tipo):
-#         self._tipo = tipo
-#         if self._tipo == 'login':
-#             self.bgcolor = ft.colors.with_opacity(0.8, ft.colors.BLACK)
-#             self.tela.controls =  [
-#                 ft.Text("Por favor, faça login", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
-#                 self.username_input,
-#                 self.password_input,
-#                 ft.Row([self.login_button,self.salvar_login], alignment='center'),
-#             ]
-#             self.tela.update()
-     
-#         elif self._tipo == 'cadastro':
-#             self.bgcolor = '#190426,0.8'
-#             self.tela.controls =  [
-#                 ft.Text("Crie um Usuário e senha", size=20, weight=ft.FontWeight.BOLD, text_align='center'),
-#                 self.username_input,
-#                 self.password_input,
-#                 ft.Row([self.cadastro_button], alignment='center'),
-#             ] 
-#             self.tela.update()
-
-
-
+client_id_g=os.getenv("CLIENT_ID_GITHUB__GG")
+client_secret_g=os.getenv("CLIENT_SECRET_GITHUB__GG")
+client_id=os.getenv("CLIENT_ID_GITHUB")
+client_secret=os.getenv("CLIENT_SECRET_GITHUB")
 
 class LoginG(ft.Container):
     def __init__(self, 
@@ -272,13 +30,13 @@ class LoginG(ft.Container):
         # self.image_fit = ft.ImageFit.FILL
         self.app = app
         self._provider_google = GoogleOAuthProvider(
-            client_id=os.getenv('GITHUB_CLIENT_ID_G'),
-            client_secret=os.getenv('GITHUB_CLIENT_SECRET_G'),
+            client_id=client_id_g,
+            client_secret=client_secret_g,
             redirect_url='http://127.0.0.1:5000/oauth_callback'
         )
         self._provider_git = GitHubOAuthProvider(
-            client_id=os.getenv('GITHUB_CLIENT_ID'),
-            client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+            client_id=os.getenv("CLIENT_ID_GITHUB"),
+            client_secret=os.getenv("CLIENT_SECRET_GITHUB"),
             redirect_url='http://127.0.0.1:5000/api/oauth/redirect'
         ) 
         self.btn_log_google = ft.IconButton(
@@ -482,7 +240,7 @@ class LoginG(ft.Container):
             if not usuario in usuarios:
                 senha = self.gerar_senha()
                 self.senhas[usuario] = senha
-                self.escrever_json(self.senhas, 'assets\senhas.json' )
+                self.escrever_json(self.senhas, r'assets\senhas.json' )
                 e.data = 'login'
                 self.entrar(e)              
             else:
@@ -639,7 +397,7 @@ class LoginG(ft.Container):
         # print(usuarios)
         if not usuario in usuarios:
             self.senhas[usuario] = senha
-            self.escrever_json(self.senhas, 'assets\senhas.json' )
+            self.escrever_json(self.senhas, r'assets\senhas.json' )
             self.tela.controls = [
                 ft.Text(
                     'Cadastro realizado com sucesso!', 
@@ -701,7 +459,7 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
-    page.add(Login())
+    page.add(LoginG())
 if __name__ == '__main__': 
     ft.app(target=main)
 

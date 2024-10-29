@@ -2215,13 +2215,13 @@ def main(page: ft.Page):
 
 
     provider_google = GoogleOAuthProvider(
-        client_id=os.getenv("GITHUB_CLIENT_ID_G"),
-        client_secret=os.getenv('GITHUB_CLIENT_SECRET_G'),
+        client_id=os.getenv("CLIENT_ID_GITHUB__GG"),
+        client_secret=os.getenv('CLIENT_SECRET_GITHUB__GG'),
         redirect_url='http://127.0.0.1:5000/oauth_callback'
     )
     provider_git = GitHubOAuthProvider(
-        client_id=os.getenv('GITHUB_CLIENT_ID'),
-        client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+        client_id=os.getenv('CLIENT_ID_GITHUB'),
+        client_secret=os.getenv('CLIENT_SECRET_GITHUB'),
         redirect_url='http://127.0.0.1:5000/api/oauth/redirect'
     )    
     saida = Saida(page)
