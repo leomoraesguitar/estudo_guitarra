@@ -10,3 +10,4 @@ __pycache__/login.cpython-312.pyc
 teste_login.py
 main.spec
 *.spec
+runtime.txt
