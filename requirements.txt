@@ -1,2 +1,2 @@
 python-dotenv
-temaselectsysten
+flet==0.23.2
