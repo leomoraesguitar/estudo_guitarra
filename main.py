@@ -6,12 +6,15 @@ import subprocess
 
 import os
 import json
-from login import Login
-from bancodadosmysql import DatabaseManager
+from login import LoginG
+# from bancodadosmysql import DatabaseManager
 from temaselectsysten import TemaSelectSysten
 from time import sleep
-import os
+
 from dotenv import load_dotenv
+from flet.auth.providers import GoogleOAuthProvider, GitHubOAuthProvider
+import random
+import string
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -25,12 +28,12 @@ login = os.getenv("ADM_ESTUDO_GUITARRA")
 
 
 class ConfirmarSaidaeResize:
-    def __init__(self,page, funcao = None, exibir = True, width_max = None, height_max = None):
+    def __init__(self,page, funcao = None, exibir = True, width_min = None, height_min = None):
         super().__init__()
         self.page = page
         self.funcao = funcao
-        self.width_max = width_max
-        self.height_max = height_max
+        self.width_min = width_min
+        self.height_min = height_min
         self.confirm_dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("Confirme!"),
@@ -46,6 +49,7 @@ class ConfirmarSaidaeResize:
 
         self.page.on_resized = self.page_resize
         # self.page.window.on_event = self.page_resize
+        self.nome = f'{self.page.title}_tamanho'
         self.exibir = exibir
         if self.exibir:
             self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
@@ -77,14 +81,18 @@ class ConfirmarSaidaeResize:
             self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
             self.pw.update()
         valores = [self.page.window.width,self.page.window.height,self.page.window.top,self.page.window.left]
-        for i in valores:
-            if i < 0:
-                i = 0
-        if valores[1]< self.height_max:
-            valores[1] = self.height_max
+
+        if valores[1]< self.height_min:
+            valores[1] = self.height_min
+        if valores[0]< self.width_min:
+            valores[0] = self.width_min      
+        if valores[2] <0:
+              valores[2] = 0   
+        if valores[3] <0:
+              valores[3] = 0                
         # with open('assets/tamanho.txt', 'w') as arq:
         #     arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
-        await self.page.client_storage.set_async("tamanho", f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
+        await self.page.client_storage.set_async(self.nome, f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
         
 
   
@@ -94,24 +102,28 @@ class ConfirmarSaidaeResize:
             # with open('assets/tamanho.txt', 'r') as arq:
             #     po = arq.readline()
 
-            po = self.page.client_storage.get("tamanho")
+            po = self.page.client_storage.get(self.nome)
 
             p1 = po.split(',')
             p = [int(float(i)) for i in p1]
             po = p[:4] 
-            for i in po:
-                if i < 0:
-                    i = 0
-            if po[1]< self.height_max:
-                po[1] = self.height_max       
+
+            if po[0]< self.width_min:
+                po[0] = self.width_min   
+            if po[1]< self.height_min:
+                po[1] = self.height_min 
+            if po[2] <0:
+                po[2] = 0   
+            if po[3] <0:
+                po[3] = 0                                   
+
             self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
             # print('acerto')
         except:
             # print('erro!')
             # with open('assets/tamanho.txt', 'w') as arq:
             #     arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
-            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = 500,self.height_max,0,0
-
+            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = self.width_min,self.height_min,0,0
 
 
 # class Resize:
@@ -197,7 +209,7 @@ class Saida:
             pass
 
             
-            
+'''            
 # class TemaSelectSysten(ft.IconButton):
 #     def __init__(self, page = None):
 #         super().__init__()    
@@ -848,6 +860,7 @@ class Saida:
 #         # self.verificar_pasta()
 #         return os.path.join(self.local, nome)
 
+'''
 
 
 
@@ -906,6 +919,38 @@ def MeuCampoTexto(nome = None, width = None,on_change = None, bold = False):
         expand = True,
         on_change=on_change,
     )
+
+
+class Verificar_pasta:
+    def __init__(self,pastalocal = 'tabelamandadostjse'):
+        self.pastalocal = pastalocal
+        self.verificar_pasta()
+
+    def verificar_pasta(self):
+        user_profile = os.environ.get('USERPROFILE')
+        # print(user_profile)
+        if not user_profile:
+            # return False  # USERPROFILE não está definido
+            self.local = None
+
+        caminho = os.path.join(user_profile, self.pastalocal)
+        
+        if os.path.exists(caminho):
+            self.local = caminho
+            # return self.caminho
+        else:
+            os.mkdir(caminho)
+            # print(caminho)
+            if os.path.exists(caminho):
+                self.local = caminho
+                # return self.caminho
+            # else:
+                # return None
+    
+
+    def caminho(self, nome):
+        # self.verificar_pasta()
+        return os.path.join(self.local, nome)
 
 
 
@@ -1083,17 +1128,193 @@ class Estudo(ft.Container):
     #     self._bgcolor = bgcolor
 
 class ClassName(ft.Row):
-    def __init__(self, pprint):
+    def __init__(self, page, pprint):
         super().__init__()
-
+        self.page = page
         self.pprint = pprint
         self.expand = True
         self.run_spacing = 0
-        self.scroll = ft.ScrollMode.AUTO 
+        self.spacing = 3
+        # self.scroll = ft.ScrollMode.AUTO 
         # self.on_scroll = self.Ocultar
         self.vertical_alignment = ft.CrossAxisAlignment.START
+        self.cloud = False
+        self.default={
+            "manu": {
+                "0": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "10", "80", "120", "5", "10", "100", "101", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "150",
+                    "Articulação": "",
+                    "técnica": "P.A",
+                    "bpm_semana": "7",
+                    "NOTAS_TEMPO": "4",
+                    "tempo": "",
+                    "item_de_estudo": "1NPC_MD"
+                },
+                "1": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "150", "120", "2", "3", "", "120", "121", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "150",
+                    "Articulação": "",
+                    "técnica": "sweep",
+                    "bpm_semana": "7",
+                    "NOTAS_TEMPO": "6",
+                    "tempo": "",
+                    "item_de_estudo": "3NPC_MD"
+                },
+                "2": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "120", "121", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "ligados",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "",
+                    "tempo": "",
+                    "item_de_estudo": "ligados - roger franco"
+                },
+                "3": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "150", "151", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "tapping",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "",
+                    "tempo": "",
+                    "item_de_estudo": "tapping penta"
+                },
+                "4": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "105", "106", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "sweep",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "",
+                    "tempo": "",
+                    "item_de_estudo": "arpegios"
+                },
+                "5": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "110", "111", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "P.A",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "",
+                    "tempo": "",
+                    "item_de_estudo": "penta 2NPC"
+                },
+                "6": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "130", "131", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "P.A",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "",
+                    "tempo": "",
+                    "item_de_estudo": "escala 3NPC"
+                },
+                "7": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "120", "121", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "ecnomic",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "8",
+                    "tempo": "",
+                    "item_de_estudo": "nos alcançou - frase1"
+                },
+                "8": {
+                    "Ano": "2024",
+                    "Mês": "setembro",
+                    "dias": [
+                        "", "", "", "", "", "120", "121", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+                    ],
+                    "meta": "",
+                    "Articulação": "",
+                    "técnica": "ecnomic",
+                    "bpm_semana": "",
+                    "NOTAS_TEMPO": "8",
+                    "tempo": "",
+                    "item_de_estudo": "nos alcançou - frase2"
+                },
+            
+                "visiv": [
+                    True,
+                    True,
+                    True,
+                    True,
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False
+                ]
+            }
+        }
 
-        self.db = DatabaseManager(connection_string, 'estudoguitarra', pprint=self.pprint)
+       
+                    
+        if self.cloud:
+            self.db = DatabaseManager(connection_string, 'estudoguitarra', pprint=self.pprint)
+            self.arquiv = self.ler_json(user_id = 1,default = self.default)
+                    
+        else:
+            self.db = None
+            self.caminho_arquivo = Verificar_pasta('Guitarra').caminho('estudoguitarra.json')
+            self.arquiv = self.ler_json2(self.caminho_arquivo,default = self.default)
+
         self.nomes_colunas = [
             'Ano', 
             'Mês', 
@@ -1116,445 +1337,11 @@ class ClassName(ft.Row):
             weight = 'BOLD',
         )
 
-        # self.caminho_arquivo = Verificar_pasta('Guitarra').caminho('estudoguitarra.json')
-        self.arquiv = self.ler_json(
-            user_id = 1,
-            default={
-                "manu": {
-                    "0": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "1NPC_MD",
-                        "t\u00e9cnica": "P.A",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "4",
-                        "meta": "150",
-                        "bpm_semana": "7",
-                        "dias": [
-                            "10",
-                            "80",
-                            "120",
-                            "5",
-                            "10",
-                            "100",
-                            "101",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "1": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "3NPC_MD",
-                        "t\u00e9cnica": "sweep",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "6",
-                        "meta": "150",
-                        "bpm_semana": "7",
-                        "dias": [
-                            "150",
-                            "120",
-                            "2",
-                            "3",
-                            "",
-                            "120",
-                            "121",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "2": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "ligados - roger franco",
-                        "t\u00e9cnica": "ligados",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "120",
-                            "121",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "3": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "tapping penta",
-                        "t\u00e9cnica": "tapping",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "150",
-                            "151",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "4": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "arpegios",
-                        "t\u00e9cnica": "sweep",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "105",
-                            "106",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "5": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "penta 2NPC",
-                        "t\u00e9cnica": "P.A",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "110",
-                            "111",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "6": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "escala 3NPC",
-                        "t\u00e9cnica": "P.A",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "130",
-                            "131",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "7": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "nos alcan\u00e7ou - frase1",
-                        "t\u00e9cnica": "ecnomic",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "8",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "120",
-                            "121",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "8": {
-                        "Ano": "2024",
-                        "M\u00eas": "setembro",
-                        "item_de_estudo": "nos alcan\u00e7ou - frase2",
-                        "t\u00e9cnica": "ecnomic",
-                        "Articula\u00e7\u00e3o": "",
-                        "tempo": "",
-                        "NOTAS_TEMPO": "8",
-                        "meta": "",
-                        "bpm_semana": "",
-                        "dias": [
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "120",
-                            "121",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            ""
-                        ]
-                    },
-                    "visiv": [
-                        True,
-                        True,
-                        True,
-                        True,
-                        True,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False,
-                        False
-                    ]
-                }
-            }
-            )
-        self.lista_estudos = list(self.arquiv.keys())
         
+
+
+        self.lista_estudos = list(self.arquiv.keys())
+
         self.estudo_mais_recente = self.Nome_estudo_mais_recente()
         self.salvos = self.Gerar_lista_salvos(self.estudo_mais_recente)
 
@@ -1602,83 +1389,44 @@ class ClassName(ft.Row):
                 for i in self.nomes_colunas
             ]
         )
+        try:
+            controls_estudo = [Estudo(*i)  for i in self.salvos]
+        except:
+            controls_estudo = [Estudo()]
 
-        
         self.estudos = ft.Column(
             expand = True,
             scroll = ft.ScrollMode.AUTO,
             spacing=0,
             run_spacing=0, 
             alignment = ft.MainAxisAlignment.START,               
-            controls = [
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '1NPC_MD asdasd a  asd as asd asdd s',
-                #     func=self.Salvar,
-                # ),
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '3NPC_MD',
-                #     func=self.Salvar,
-                # ), 
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '4NPC_MD',
-                #     func=self.Salvar,
-                # ),
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '5NPC_MD',
-                #     func=self.Salvar,
-                # ),
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '3NPC_MD',
-                #     func=self.Salvar,
-                # ),
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '6NPC_MD',
-                #     func=self.Salvar,
-                # ),
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '7NPC_MD',
-                #     func=self.Salvar,
-                # ),
-                
-                # Estudo(
-                #     Ano = '2024',
-                #     Mês = 'setembro',
-                #     item_de_estudo = '8NPC_MD',
-                #     func=self.Salvar,
-
-                # ), 
-                Estudo(*i)   
-                for i in self.salvos                                                                                                                                                                                          
-            ]
+            controls = controls_estudo
         ) 
-        self.lgg = Login(func=self.Entrar)
+        # self.lgg = Login(func=self.Entrar)
         self.controls1 = [
-            ft.Column(
-                expand = True,
-                # scroll = ft.ScrollMode.AUTO,
-                spacing=0,
-                run_spacing=0, 
-                alignment = ft.MainAxisAlignment.START,
+            ft.Row(
                 controls = [
-                    self.linha,                                             
-                    self.estudos,
-                 
-                ] 
+                    ft.Column(
+                        expand = True,
+                        # scroll = ft.ScrollMode.AUTO,
+                        spacing=0,
+                        run_spacing=0, 
+                        alignment = ft.MainAxisAlignment.START,
+                        controls = [
+                            self.linha,                                             
+                            self.estudos,
+                        
+                        ] 
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                spacing=0,
+                run_spacing=0,
+                scroll = ft.ScrollMode.AUTO,
+                expand=True,
             )
+
         ]
 
         # self.controls = [
@@ -1693,27 +1441,30 @@ class ClassName(ft.Row):
         #         ),
         #     )
         # ]
+        
 
         for n,i in enumerate(self.estudos.controls):
-            i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
+            # i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
+            i.bgcolor = 'transparent' if n%2 == 0 else 'grey,0.3'
 
    
         # print(estudo_mais_recente)
         self.drop_estudos = ft.Dropdown(
             hint_text='Lista de Estudos',
+            # label = 'Lista de Estudos:',
             value = self.estudo_mais_recente,
+            on_blur=self.drop_em_foco,
             # expand_loose = True,
-            width=200,            
-            padding = ft.Padding(0,0,2,0),
-            height = 20,
+            # width=70,            
+            # padding = ft.Padding(0,0,2,0),
+            # height = 40,
             filled=True,
             dense=True,
             alignment = ft.alignment.center,
             text_size = 18,
             col = 4,
             border_radius=5,
-            content_padding = ft.Padding(3,0,0,0),
-            label = 'Lista de Estudos:',
+            content_padding = ft.Padding(0,0,0,0),
             # icon_content = ft.Icon(name = ft.icons.FILTER_LIST),
             options=[ft.dropdown.Option(i)
                 for i in self.lista_estudos[::-1]
@@ -1721,12 +1472,153 @@ class ClassName(ft.Row):
             on_change=self.Carregar
         )
     
-        self.controls = self.controls1
+        # self.controls = self.controls1
+
+        self.barra_lateral =ft.Container(
+                # padding=ft.Padding(5,2,5,3),
+                # border_radius=3,
+                on_hover = self.hoved_barra_lateral,
+                width=20,                
+                gradient = ft.LinearGradient(
+                    end=ft.alignment.top_center,
+                    begin = ft.alignment.bottom_center,
+                    colors=[                        
+                        ft.colors.with_opacity(i/20, ft.colors.SURFACE_VARIANT) for i in  [1,2]
+                    ]
+                ),
+                content = ft.Column(
+                    # width=120,
+                    visible=False,
+                    expand_loose=True,
+                    # divider_thickness = 10,
+                    # item_extent = 1,
+                    horizontal_alignment='center',
+                    spacing=0,
+                    controls=[
+                        ft.Container(TemaSelectSysten(), scale=1),
+                        ft.Column(
+                            [ 
+                                ft.Column(
+                                    controls = [
+                                    i,
+                                    ft.Divider(thickness = 1, color='surfacevariant,0.1', height=40),
+                                    ],
+                                    horizontal_alignment='center'
+                                )
+                    
+                                for i in [
+                                    # ft.Divider(thickness = 1, color=ft.colors.SURFACE_VARIANT, height=80),
+                                    self.drop_estudos,
+                                    # ft.Divider(thickness = 1, color=ft.colors.SURFACE_VARIANT, height=80),
+                                    ft.OutlinedButton(
+                                        text = 'Novos \nEstudos',
+                                        height=40,
+                                        width = 90,
+                                        style=ft.ButtonStyle(
+                                            padding=ft.Padding(4,0,4,0),
+                                            shape = ft.ContinuousRectangleBorder(12)
+                                        ),
+                                        on_click=self.Criar_novo_estudo,
+                                        col = 4,
+                                    ), 
+                                    # ft.Divider(thickness = 1, color=ft.colors.SURFACE_VARIANT, height=80),                        
+                                    ft.FilledButton(
+                                        text = 'Salvar',
+                                        height=20,
+                                        width = 90,
+                                        # expand = True,
+                                        data = 'dias',
+                                        style=ft.ButtonStyle(
+                                            padding=ft.Padding(0,0,0,0),
+                                            visual_density=ft.VisualDensity.COMPACT
+                                        ),
+                                        on_click=self.Salvar,
+                                        # col = {'xs':5, 'sm':4},
+                                        
+                                    ),                           
+                                    # ft.Divider(thickness = 1, color=ft.colors.SURFACE_VARIANT, height=80),
+                                    ft.FilledTonalButton(
+                                        text = 'Add. linha',
+                                        height=20,
+                                        width = 90,
+                                        style=ft.ButtonStyle(
+                                            padding=ft.Padding(4,0,4,0)
+                                        ),
+                                        on_click=self.Add_nova_linha,
+                                        col = {'xs':5, 'sm':4},
+                                        
+                                    ),
+                                    # ft.Divider(thickness = 1, color=ft.colors.SURFACE_VARIANT),
+                                ] 
+                            ]  
+                                        
+                        )
+                    
+                    ]
+                )
+
+        )
+
+        self.controls = [self.barra_lateral]+self.controls1
+
+        # self.controls =self.controls1
+            
+      
 
         for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
             i.content.controls[0].value = j
      
         # self.Ocultacao(False)
+
+
+
+    def did_mount(self):
+        # for k in list(self.arquiv.get(nome, None).keys())[-1]
+        # for i in self.linha.controls[15:]:
+        #         i.visible = True
+
+        # for k in self.estudos.controls:
+        #     for i in k.content.controls[15:]:                  
+        #         i.visible = True
+
+        # print(self.arquiv.get(self.estudo_mais_recente, None)['visiv'])
+
+
+        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
+            i.content.controls[0].value = j
+
+        # for k in self.estudos.controls:
+        #     for i in k.content.controls[15:]:                  
+        #         i.visible = True            
+        self.page.floating_action_button = ft.FloatingActionButton(
+            text = 'Exibir',
+            data = False,
+            bgcolor=ft.colors.SURFACE_VARIANT,
+
+            on_click=self.Ocultar
+        )
+        # self.Appbar(mostrar=True)
+        self.navigation_bar(mostrar = False)
+        self.page.update()
+        self.update()
+        self.Ocultacao(False)
+        # self.Entrar(1)
+
+    def hoved_barra_lateral(self, e):
+        if e.data == 'true':
+            e.control.width = 150
+            e.control.content.visible = True
+           
+        
+        else:
+            e.control.width = 20
+            e.control.content.visible = False
+        e.control.update()
+        
+    def drop_em_foco(self, e):
+        self.barra_lateral.width = 150
+        self.barra_lateral.content.visible = True
+        self.barra_lateral.update()
 
 
     def Entrar(self, e):
@@ -1751,7 +1643,8 @@ class ClassName(ft.Row):
      
     
     def Appbar(self, mostrar = True): 
-        if mostrar:   
+        if mostrar:
+            '''   
             # self.page.appbar = ft.AppBar(
             #     actions = [
             #         TemaSelectSysten(),  
@@ -1807,9 +1700,9 @@ class ClassName(ft.Row):
             #     bgcolor=ft.colors.BLACK38,
             #     automatically_imply_leading=False,
             # )     
-
-
-            self.page.appbar = ft.Container(
+            '''
+            '''
+            self.page.drawer = ft.Container(
                 padding=ft.Padding(5,2,5,3),
                 border_radius=3,
                 gradient = ft.LinearGradient(
@@ -1865,7 +1758,21 @@ class ClassName(ft.Row):
                     ]
                 ),
             )
-
+            '''
+            rail = ft.NavigationRail(
+                destinations = [
+                    ft.NavigationRailDestination(
+                        label="Item 1",
+                        icon=ft.icons.DOOR_BACK_DOOR_OUTLINED,
+                        selected_icon_content=ft.Icon(ft.icons.DOOR_BACK_DOOR),
+                    ),                    
+                ]
+            )
+            self.page.add(rail)
+            
+    
+    
+    
     def navigation_bar(self, mostrar = True):
         if mostrar:
             self.page.navigation_bar = ft.CupertinoNavigationBar(
@@ -1884,36 +1791,6 @@ class ClassName(ft.Row):
                     ]
                 )
 
-
-    def did_mount(self):
-        # for k in list(self.arquiv.get(nome, None).keys())[-1]
-        # for i in self.linha.controls[15:]:
-        #         i.visible = True
-
-        # for k in self.estudos.controls:
-        #     for i in k.content.controls[15:]:                  
-        #         i.visible = True
-
-        # print(self.arquiv.get(self.estudo_mais_recente, None)['visiv'])
-        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
-            i.content.controls[0].value = j
-
-        # for k in self.estudos.controls:
-        #     for i in k.content.controls[15:]:                  
-        #         i.visible = True            
-        self.page.floating_action_button = ft.FloatingActionButton(
-            text = 'Exibir',
-            data = False,
-            bgcolor=ft.colors.SURFACE_VARIANT,
-
-            on_click=self.Ocultar
-        )
-        self.Appbar(mostrar=True)
-        self.navigation_bar(mostrar = False)
-        self.page.update()
-        self.update()
-        self.Ocultacao(False)
-        # self.Entrar(1)
 
 
     def Ocultar(self,e):
@@ -1981,10 +1858,12 @@ class ClassName(ft.Row):
 
     def Nome_estudo_mais_recente(self):
         try:
-            n = self.db.LerJson(user_id = 0,tabela = "estudoguitarra" )
-            nestrec = n["nestrec"]
-            # with open('assets/nestrec.txt', 'r')as arq:
-            #     nestrec = arq.readline()
+            if self.db:
+                n = self.db.LerJson(user_id = 0,tabela = "estudoguitarra" )
+                nestrec = n["nestrec"]
+            else:
+                with open('assets/nestrec.txt', 'r')as arq:
+                    nestrec = arq.readline()
             return nestrec
         except:
             # with open('assets/nestrec.txt', 'w')as arq:
@@ -1992,7 +1871,7 @@ class ClassName(ft.Row):
             return 'manu'
 
 
-    def Criar_novo_estudo(self, e):
+    def Criar_novo_estudo2(self, e):
         old_actions = self.page.appbar.actions.copy()
         texto = ft.TextField(
                 label='Digite o nome da lista',
@@ -2008,7 +1887,7 @@ class ClassName(ft.Row):
             self.estudos.controls.append(Estudo(func=self.Salvar))
             self.estudos.controls.append(Estudo(func=self.Salvar))
             for n,i in enumerate(self.estudos.controls):
-                i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
+                i.bgcolor = 'transparent' if n%2 == 0 else 'grey,0.3'
 
             self.estudos.update()
             # drop_estudos.update()
@@ -2045,15 +1924,99 @@ class ClassName(ft.Row):
         self.page.appbar.update()
 
 
+    def Criar_novo_estudo(self, e):
+        old_barra_lateral = self.barra_lateral.content.controls.copy()
+        old_width_barra_lateral = self.barra_lateral.width
+        old_spacing_barra_lateral = self.barra_lateral.content.spacing
+        self.barra_lateral.width = 300
+        self.barra_lateral.content.spacing = 15
+        self.barra_lateral.on_hover = None
+        texto = ft.TextField(
+                label='Digite o nome da lista',
+                # hint_text='Nome da lista de estudos',
+                content_padding=ft.Padding(5,0,0,0),
+                # height=30,
+                filled=True,
+
+
+            )
+        def Criar(e):
+            self.estudos.controls = []
+            self.estudos.update()
+            self.estudos.controls.append(Estudo(func=self.Salvar))
+            self.estudos.controls.append(Estudo(func=self.Salvar))
+            for n,i in enumerate(self.estudos.controls):
+                i.bgcolor = 'transparent' if n%2 == 0 else 'grey,0.3'
+
+            self.estudos.update()
+            self.barra_lateral.content.controls = old_barra_lateral
+            self.barra_lateral.content.width = old_width_barra_lateral
+            self.barra_lateral.content.spacing   = old_spacing_barra_lateral        
+            self.barra_lateral.update()
+            # page.appbar.actions[0].value = 'leo'
+            e.control.data = texto.value
+            self.Salvar(e)
+
+            self.lista_estudos = list(self.arquiv.keys())
+            self.drop_estudos.options=[ft.dropdown.Option(i)
+                for i in self.lista_estudos[::-1]
+            ]
+            self.drop_estudos.value = texto.value
+            self.drop_estudos.update()
+            # print(self.page.appbar.actions[0].value )
+
+        def Cancelar(e):
+            self.barra_lateral.content.controls = old_barra_lateral
+            self.barra_lateral.width = old_width_barra_lateral
+            self.barra_lateral.content.spacing    = old_spacing_barra_lateral  
+            self.barra_lateral.on_hover = self.hoved_barra_lateral      
+            self.barra_lateral.update()
+
+        self.barra_lateral.content.controls = [
+            ft.Text(height = 30),
+            texto,
+            ft.Row(
+                [ 
+                    ft.FilledButton(
+                            text='Criar',
+                            on_click=Criar,
+                        ),
+                    ft.OutlinedButton(
+                        text='Cancelar',
+                        on_click=Cancelar,
+                    ), 
+                ] ,
+                alignment= 'center'  
+
+            )
+        ]
+        self.barra_lateral.update()
+
+
 
     def Gerar_lista_salvos(self, nome = 'padrão'):         
          return [[i for j,i in list(self.arquiv.get(nome, None).get(k, None).items())+[(None,self.Salvar)]] for k in list(self.arquiv.get(nome, None).keys())[:-1]]
          
 
     async def Add_nova_linha(self, e):
+        for i in self.linha.controls[:2]+self.linha.controls[3:15]:
+            i.visible = True
+
+        for i in self.linha.controls[15:]:
+                i.visible = True
+
+        for k in self.estudos.controls:
+            for i in k.content.controls[15:]:                  
+                i.visible = True
+
+
+        for k in self.estudos.controls:
+            for i in k.content.controls[:2]+k.content.controls[3:15]:
+                i.visible = True     
+
         self.estudos.controls.append(Estudo(func=self.Salvar))
         for n,i in enumerate(self.estudos.controls):
-            i.bgcolor = ft.colors.SURFACE if n%2 == 0 else ft.colors.with_opacity(0.15,ft.colors.SURFACE_VARIANT)
+            i.bgcolor = 'transparent' if n%2 == 0 else 'grey,0.3'
 
         self.estudos.update()
 
@@ -2064,14 +2027,14 @@ class ClassName(ft.Row):
             dic[n] = {
                 'Ano': i.Ano.value,
                 'Mês': i.Mês.value,
-                'item_de_estudo': i.item_de_estudo.value,
-                'técnica': i.técnica.value,
-                'Articulação': i.Articulação.value,
-                'tempo': i.tempo.value,
-                'NOTAS_TEMPO': i.NOTAS_TEMPO.value,
+                'dias': [d.value for d in i.dias],
                 'meta': i.meta.value,
+                'Articulação': i.Articulação.value,
+                'técnica': i.técnica.value,
                 'bpm_semana': i.bpm_semana.value,
-                'dias': [d.value for d in i.dias]
+                'NOTAS_TEMPO': i.NOTAS_TEMPO.value,
+                'tempo': i.tempo.value,
+                'item_de_estudo': i.item_de_estudo.value,
             }
 
         dic['visiv'] = []
@@ -2086,38 +2049,56 @@ class ClassName(ft.Row):
             nome = e.control.data
         else:
             nome = self.drop_estudos.value
-        self.arquiv = self.ler_json(
-            user_id = 1,
 
-            )  
-        self.arquiv[nome] = dic        
-        # self.escrever_json(self.arquiv, self.caminho_arquivo)
-        sleep(0.7)
-        self.db.EditarJson(
-            user_id=1, 
-            novos_dados_json=self.arquiv,
-            tabela = 'estudoguitarra'
-        )
+        if self.cloud:
+            self.arquiv = self.ler_json(user_id = 1,default = self.default)
+                    
+        else:
+            self.arquiv = self.ler_json2(self.caminho_arquivo,default = self.default)
+
+        self.arquiv[nome] = dic  
+
+        if not self.db:      
+            self.escrever_json(self.arquiv, self.caminho_arquivo)
+        else:
+            sleep(0.7)
+            self.db.EditarJson(
+                user_id=1, 
+                novos_dados_json=self.arquiv,
+                tabela = 'estudoguitarra'
+            )
 
         # print('dados salvos')
         # print({'padrão':dic})
 
 
     def Carregar(self, e):
+        old_barra_lateral = self.barra_lateral.content.controls.copy()
+        old_width_barra_lateral = self.barra_lateral.width
+        old_spacing_barra_lateral = self.barra_lateral.content.spacing
+        self.barra_lateral.width = 300
+        self.barra_lateral.content.spacing = 15
+        self.barra_lateral.on_hover = None
+
         nome  = e.control.value
         lista = self.Gerar_lista_salvos(nome)
         # print(lista)
         self.estudos.controls = [ Estudo(*i)    for i in lista ]
-        # with open('nestrec.txt', 'w') as arq:
-        #     arq.write(nome)    
-
-        self.db.EditarJson(
-            user_id=0, 
-            novos_dados_json={"nestrec":nome},
-            tabela = 'estudoguitarra'
-        )            
+        if not self.db: 
+            with open('nestrec.txt', 'w') as arq:
+                arq.write(nome)    
+        else:
+            self.db.EditarJson(
+                user_id=0, 
+                novos_dados_json={"nestrec":nome},
+                tabela = 'estudoguitarra'
+            )            
 
         self.estudos.update()
+
+
+
+
 
     def escrever_json(self, data, filename):
         if not filename.endswith('.json'):
@@ -2146,12 +2127,19 @@ class ClassName(ft.Row):
         else:
             return default or {}     
 
+
+
+
+
 def main(page: ft.Page):
     # Definindo o titulo da pagina
     page.title = 'Estudo de Guitarra'
     page.window.width = 500  # Define a largura da janela como 800 pixels
     page.window.height = 385  # 
     page.spacing=2
+    # page.bgcolor = '#75a64d'
+
+
     page.theme_mode = ft.ThemeMode.DARK
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
@@ -2225,58 +2213,278 @@ def main(page: ft.Page):
     )    
 
 
+
+    provider_google = GoogleOAuthProvider(
+        client_id=os.getenv("GITHUB_CLIENT_ID_G"),
+        client_secret=os.getenv('GITHUB_CLIENT_SECRET_G'),
+        redirect_url='http://127.0.0.1:5000/oauth_callback'
+    )
+    provider_git = GitHubOAuthProvider(
+        client_id=os.getenv('GITHUB_CLIENT_ID'),
+        client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+        redirect_url='http://127.0.0.1:5000/api/oauth/redirect'
+    )    
     saida = Saida(page)
     # print = saida.pprint 
     # Resize2(page)
     # Resize(page, exibir=False)
     page.update()
-    p = ClassName( pprint = saida.pprint)
+    p = ClassName( page,pprint = saida.pprint)
     def sair(e):
         p.Salvar(e)
-        p.db.fechar_conexao(e)
+        if p.db:
+            p.db.fechar_conexao(e)
 
-        # def MatarProcesso(process_name = "main.exe"):
-        #     comando = f"taskkill /F /IM {process_name}"
-        #     resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
-        #     if resultado.returncode == 0:
-        #         print(f"Processo {process_name} finalizado com sucesso.")
-        #     else:
-        #         print(f"Erro ao finalizar o processo {process_name}: {resultado.stderr}")
-
-
-        # def mt():
-        #     MatarProcesso('main.exe')
-        # def mt1():
-        #     MatarProcesso('flet.exe')
-        # def is_exe():
-        #     return getattr(sys, 'frozen', False)
-
-
-        # if is_exe():
-        #     MatarProcesso('main.exe')
-        #     MatarProcesso('flet.exe')     
+      
                
-    ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_max=723,height_max=656)
+    ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_min=723,height_min=656)
     # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
 
-    def entrar(e):
-        page.clean()
-        page.add(p)
-        page.update()
+    # def entrar(e):
+    #     match e.data:
+    #         case 'login':
+    #             page.remove(cadastrar_user)
+    #             page.add(loggg)
+    #             page.update()
 
-    loggg = ft.Container(
-                content = Login(entrar), 
-                alignment=ft.alignment.center,  
-                expand = True,
-                image = ft.DecorationImage(
-                    src =  "git.png",  # URL da imagem de fundo
-                    fit = ft.ImageFit.FILL
-                ),
-            )
+    #         case 'logado':
+    #             print('aqui')
+    #             page.remove(loggg)
+    #             page.add(p)
+    #             page.update()
 
-    page.add(loggg)
+    # def abrirtela(e):
+    #     match e.control.data:
+    #         case 'telacadastro':
+    #             if loggg in page.controls:
+    #                 page.remove(loggg)
+    #                 page.add(cadastrar_user)
+    #                 page.update()  
+
+    #         case 'telalogin':
+    #             if cadastrar_user in page.controls:
+    #                 page.remove(cadastrar_user)
+    #                 page.add(loggg)
+    #                 page.update()                        
+
+    # def fazerlogin(e):
+    #     match e.control.data:
+    #         case 'google':
+    #             page.login(provider = provider_google)
+    #         case 'Github':
+    #             page.login(provider = provider_git)   
+
+    # def gerar_senha():
+    #     # Lista de caracteres especiais
+    #     caracteres_especiais = '!@#$%^&*()'
+        
+    #     # Gera um caractere maiúsculo aleatório
+    #     letra_maiuscula = random.choice(string.ascii_uppercase)
+        
+    #     # Gera um caractere especial aleatório
+    #     caractere_especial = random.choice(caracteres_especiais)
+        
+    #     # Gera 4 caracteres aleatórios (podem ser letras minúsculas, maiúsculas ou dígitos)
+    #     caracteres_aleatorios = random.choices(string.ascii_letters + string.digits, k=4)
+        
+    #     # Combina todos os caracteres
+    #     senha = [letra_maiuscula, caractere_especial] + caracteres_aleatorios
+        
+    #     # Embaralha os caracteres para garantir aleatoriedade
+    #     random.shuffle(senha)
+        
+    #     # Converte a lista para string e retorna
+    #     return ''.join(senha)
+
+    
 
 
+    # async def onlogin(e):
+    #     loggg.content.visible = False
+    #     cadastrar_user.content.visible = False
+    #     page.update()        
+    #     if cadastrar_user in page.controls:
+    #         usuario = page.auth.user['email']
+    #         usuarios = list(loggg.content.controls[1].senhas.keys())
+    #         if not usuario in usuarios:
+    #             senha = gerar_senha()
+    #             cadastrar_user.content.controls[1].senhas[usuario] = senha
+    #             cadastrar_user.content.controls[1].escrever_json(cadastrar_user.content.controls[1].senhas, 'assets\senhas.json' )
+    #             e.data = 'login'
+    #             entrar(e)              
+    #         else:
+    #             dialog = ft.AlertDialog(title=ft.Text("Usuário já cadastrado"))
+    #             dialog.open = True
+    #             page.overlay.append(dialog)
+
+    #             page.update()    
+    #         loggg.content.visible = True
+    #         cadastrar_user.content.visible = True                
+    #         page.update()
+
+    #     elif loggg in page.controls:
+    #         usuario = page.auth.user['email']
+    #         usuarios = list(loggg.content.controls[1].senhas.keys())
+    #         if usuario in usuarios:
+    #             await page.client_storage.set_async("login", True)
+    #             e.data = 'logado'
+    #             entrar(e)
+    #         else:
+    #             dialog = ft.AlertDialog(title=ft.Text("Usuário não cadastrado"))
+    #             dialog.open = True
+    #             page.overlay.append(dialog)
+    #             loggg.content.visible = True
+    #             cadastrar_user.content.visible = True                
+    #             page.update()            
+    #     #     print('login')
+    #     # print(page.auth.user)
+    # page.on_login = onlogin
+
+    # def logout(e):
+    #     loggg.content.visible = True
+    #     cadastrar_user.content.visible = True 
+    #     page.update()
+
+
+
+    # btn_log_google = ft.IconButton(
+    #     content = ft.Image(
+    #         src='logo_google.png',
+    #         data = 'google',
+    #         width = 120,
+    #         height = 25,
+    #         border_radius = 20,
+    #         fit = ft.ImageFit.FILL,
+    #     ),
+    #     on_click = fazerlogin,
+    #     style = ft.ButtonStyle(
+    #         padding=ft.Padding(0,0,0,0),
+    #     ),
+
+    # )
+    # btn_log_github =  ft.IconButton(
+    #     content = ft.Image(
+    #         src='logo_github.png',
+    #         data = 'Github',
+    #         width = 120,
+    #         height = 25,
+    #         border_radius = 20,
+    #         fit = ft.ImageFit.FILL,
+    #     ),
+    #     on_click = fazerlogin,
+    #     style = ft.ButtonStyle(
+    #         padding=ft.Padding(0,0,0,0),
+    #     ),
+
+    # )   
+
+    # linha_botoes_bigs = ft.Row(
+    #     controls = [btn_log_google ,btn_log_github],
+    #     tight=True,
+    #     alignment='center',
+    #     vertical_alignment='center',
+    # )
+
+    # linha_btn_cadastro_login = ft.Row([
+    #     ft.TextButton(
+    #         'Fazer login',
+    #         height = 20,
+    #         style = ft.ButtonStyle(
+    #             color = {
+    #                 ft.ControlState.HOVERED:'#ede8fd',
+    #                 ft.ControlState.DEFAULT:'blue',
+    #             },
+    #             bgcolor = 'black,0.8',
+    #             padding = ft.Padding(5,0,5,0),
+             
+    #         ),
+    #         data = 'telalogin',
+    #         on_click=abrirtela,
+    #     ),  
+    #     ft.TextButton(
+    #         'Cadastre-se',
+    #         height = 20,
+    #         style = ft.ButtonStyle(
+    #             color = {
+    #                 ft.ControlState.HOVERED:'#ede8fd',
+    #                 ft.ControlState.DEFAULT:'blue',
+    #             },
+    #             bgcolor = 'black,0.8',
+    #             padding = ft.Padding(5,0,5,0),
+    #         ),
+    #         data = 'telacadastro',
+    #         on_click=abrirtela,
+    #     ),        
+    #     ],
+    #     tight=True,
+    #     alignment='center',
+    #     vertical_alignment='center',
+    
+    # )
+
+
+    # loggg = ft.Container(
+    #             content = ft.Column(
+    #                 controls = [
+                        
+    #                     linha_botoes_bigs,
+
+    #                     Login(entrar, 'login'),
+    #                     linha_btn_cadastro_login,
+    #                 ],
+    #                 alignment='center',
+    #                 horizontal_alignment='center', 
+    #             ),
+    #             alignment=ft.alignment.center,  
+    #             expand = True,
+    #             image = ft.DecorationImage(
+    #                 src =  "git.png",  # URL da imagem de fundo
+    #                 fit = ft.ImageFit.FILL
+    #             ),
+    #         )
+
+
+    # cadastrar_user = ft.Container(
+    #             content = ft.Column(
+    #                 controls = [
+    #                     linha_botoes_bigs,
+    #                     Login(entrar, 'cadastro'),
+    #                     linha_btn_cadastro_login,                  
+
+    #                 ],
+    #                 alignment='center',
+    #                 horizontal_alignment='center', 
+    #             ),
+    #             alignment=ft.alignment.center,  
+    #             expand = True,
+    #             image = ft.DecorationImage(
+    #                 src =  "git.png",  # URL da imagem de fundo
+    #                 fit = ft.ImageFit.FILL
+    #             ),
+    #         )
+
+    pl = LoginG(        ft.Container(
+            gradient = ft.LinearGradient(
+                        end=ft.alignment.top_center,
+                        begin = ft.alignment.bottom_center,
+                        colors=[                        
+                            ft.colors.with_opacity(i/20, ft.colors.SURFACE_VARIANT) for i in  [1,2]
+                        ]
+                    ),
+            content = p,
+            expand=True,
+    ))
+
+    page.add(pl    
+
+    )
+
+
+
+# bancodadosmysql = "^0.1.4"
 if __name__ == '__main__': 
-    ft.app(target=main)
+    ft.app(target=main,
+            # port=5000, 
+            # view=ft.AppView.WEB_BROWSER
+    )
 
