@@ -10,7 +10,7 @@ from login import LoginG
 # from bancodadosmysql import DatabaseManager
 from temaselectsysten import TemaSelectSysten
 from time import sleep
-
+from treino_do_dia import Treinos, TreinosDiarios
 from dotenv import load_dotenv
 from flet.auth.providers import GoogleOAuthProvider, GitHubOAuthProvider
 import random
@@ -866,6 +866,7 @@ class Saida:
 
 
 larguras = {
+    'del':30,
     "Ano": 80,
     "Mês": 90,
     "item_de_estudo": 180,
@@ -969,13 +970,21 @@ class Estudo(ft.Container):
         item_de_estudo = None,
         func = None,               
         ):
+
         super().__init__()
         self.expand_loose = True
-
+        self.key = item_de_estudo
 
         self.func = func
 
+        self.delete = ft.Container(
+            content = ft.Icon(name = ft.icons.DELETE),
+            padding=0,
+            margin=0,
+            on_click=self.Deletar,
+            tooltip='deletar linha',
 
+        )
         self.Ano = MeuCampoTexto(nome = Ano, width = larguras.get("Ano", 80))
         self.Mês = MeuCampoTexto(nome = Mês, width = larguras.get("Mês", 80))
         self.item_de_estudo = MeuCampoTexto(nome = item_de_estudo, width = larguras.get("item_de_estudo", 100), bold=True)
@@ -1005,6 +1014,7 @@ class Estudo(ft.Container):
             spacing=1,
             run_spacing=0,
             controls = [
+                self.delete,
                 self.Ano,
                 self.Mês,
                 self.item_de_estudo,
@@ -1086,12 +1096,6 @@ class Estudo(ft.Container):
         # except:
         #     pass 
 
-
-
-
-
-
-
     def Savar(self, e):
         if self.func:
             self.func(e)
@@ -1119,6 +1123,10 @@ class Estudo(ft.Container):
             focused_border_color = ft.colors.TRANSPARENT if somente_leitura else None,
         )            
 
+    def Deletar(self, e):
+        if self.func:
+            self.func(self)
+
     # @property
     # def bgcolor(self):
     #     return self._bgcolor
@@ -1135,6 +1143,7 @@ class ClassName(ft.Row):
         self.expand = True
         self.run_spacing = 0
         self.spacing = 3
+        self.modotabela = False
         # self.scroll = ft.ScrollMode.AUTO 
         # self.on_scroll = self.Ocultar
         self.vertical_alignment = ft.CrossAxisAlignment.START
@@ -1316,6 +1325,7 @@ class ClassName(ft.Row):
             self.arquiv = self.ler_json2(self.caminho_arquivo,default = self.default)
 
         self.nomes_colunas = [
+            'del',
             'Ano', 
             'Mês', 
             'item de estudo',
@@ -1365,7 +1375,7 @@ class ClassName(ft.Row):
                                 shape = ft.CircleBorder(),
                                 scale= 0.5,                   
                                 label_position = ft.LabelPosition.LEFT,
-                                visual_density = ft.VisualDensity.COMPACT,
+                                # visual_density = ft.VisualDensity.COMPACT,
                                 on_change=self.Salvar
                             ),
                             ft.Text(
@@ -1390,7 +1400,7 @@ class ClassName(ft.Row):
             ]
         )
         try:
-            controls_estudo = [Estudo(*i)  for i in self.salvos]
+            controls_estudo = [Estudo(*i) for i in self.salvos]
         except:
             controls_estudo = [Estudo()]
 
@@ -1400,7 +1410,8 @@ class ClassName(ft.Row):
             spacing=0,
             run_spacing=0, 
             alignment = ft.MainAxisAlignment.START,               
-            controls = controls_estudo
+            controls = controls_estudo,
+            on_scroll=self.Rolar_coluna_fixa,
         ) 
         # self.lgg = Login(func=self.Entrar)
         self.controls1 = [
@@ -1425,6 +1436,7 @@ class ClassName(ft.Row):
                 run_spacing=0,
                 scroll = ft.ScrollMode.AUTO,
                 expand=True,
+                on_scroll=self.ScrolIntervalo,
             )
 
         ]
@@ -1480,8 +1492,8 @@ class ClassName(ft.Row):
                 on_hover = self.hoved_barra_lateral,
                 width=20,                
                 gradient = ft.LinearGradient(
-                    end=ft.alignment.top_center,
-                    begin = ft.alignment.bottom_center,
+                    end=ft.alignment.center_left,
+                    begin = ft.alignment.center_right,
                     colors=[                        
                         ft.colors.with_opacity(i/20, ft.colors.SURFACE_VARIANT) for i in  [1,2]
                     ]
@@ -1530,7 +1542,7 @@ class ClassName(ft.Row):
                                         data = 'dias',
                                         style=ft.ButtonStyle(
                                             padding=ft.Padding(0,0,0,0),
-                                            visual_density=ft.VisualDensity.COMPACT
+                                            # visual_density=ft.VisualDensity.COMPACT
                                         ),
                                         on_click=self.Salvar,
                                         # col = {'xs':5, 'sm':4},
@@ -1559,9 +1571,125 @@ class ClassName(ft.Row):
 
         )
 
-        self.controls = [self.barra_lateral]+self.controls1
+
+
+        self.linhas_coluna_fixa = ft.Column(
+            spacing=0,
+            expand=True,
+            on_scroll=self.Rolar_coluna_fixa,
+            scroll=ft.ScrollMode.AUTO,            
+            controls = [                
+                ft.Container(
+                    ft.TextField(
+                        value = i.item_de_estudo.value,
+                        width=larguras.get("item_de_estudo", 100),
+                        content_padding=ft.Padding(4,0,4,0),
+                        height=48,
+                        # dense=True,
+                        text_style=ft.TextStyle(weight='BOLD'),
+                        text_align=ft.TextAlign.CENTER,
+                        multiline=True,
+                        max_lines = 2,
+                        # expand = True,
+                        # on_change=on_change,
+                    ),
+                    bgcolor= 'transparent' if n%2 == 0 else 'grey,0.3',                
+                )
+                for n,i in enumerate(self.estudos.controls)
+            ]
+        )
+        self.coluna_fixa = ft.Column(
+            spacing=0,
+            # height=800,
+            visible=False,
+            alignment=ft.MainAxisAlignment.START,
+            expand_loose=True,
+            # tight=True,
+            # scroll=ft.ScrollMode.AUTO,
+            
+            controls = [
+                ft.Container(
+                    content = ft.Column(
+                        spacing = 0,
+                        run_spacing=0,
+                        horizontal_alignment = ft.CrossAxisAlignment.CENTER,
+                        alignment = ft.MainAxisAlignment.START,
+                        controls = [
+                            ft.Checkbox(
+                                data='dias',
+                                splash_radius = 0,
+                                shape = ft.CircleBorder(),
+                                scale= 0.5,                   
+                                label_position = ft.LabelPosition.LEFT,
+                                # visual_density = ft.VisualDensity.COMPACT,
+                                # on_change=self.Salvar
+                            ),
+                            ft.Text(
+                                value = 'item de estudo', 
+                                style=self.style_text,
+                                text_align=ft.TextAlign.CENTER
+                            ), 
+                        ],
+                        # wrap = True,
+                        width=Calc_larg('item de estudo'),
+                        height=80,
+                    ),
+                    
+
+                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    alignment = ft.alignment.center,
+                    padding=0,
+                    
+                   
+                ), 
+                self.linhas_coluna_fixa
+            ]
+        )
+
+        self.treinodiario = TreinosDiarios(self.page)
+        if self.modotabela:
+            self.controls = [self.barra_lateral]+[self.coluna_fixa]+self.controls1
+        else:
+            self.controls = [self.treinodiario]
+        # self.controls = [self.barra_lateral]+[self.coluna_fixa]
 
         # self.controls =self.controls1
+        # self.controls = [
+        #     ft.Column(
+        #         [   
+        #             ft.Row(
+        #                 controls = [
+        #                     ft.Column(
+        #                         expand = True,
+        #                         # scroll = ft.ScrollMode.AUTO,
+        #                         spacing=0,
+        #                         run_spacing=0, 
+        #                         alignment = ft.MainAxisAlignment.START,
+        #                         controls = [
+        #                             self.linha,                                             
+        #                             self.estudos,
+                                
+        #                         ] 
+        #                     )
+        #                 ],
+        #                 alignment=ft.MainAxisAlignment.START,
+        #                 vertical_alignment=ft.CrossAxisAlignment.START,
+        #                 spacing=0,
+        #                 run_spacing=0,
+        #                 # scroll = ft.ScrollMode.ALWAYS,
+        #                 expand=True,
+                        
+                   
+                
+        #             )
+        #         ],
+        #         expand = True, 
+        #     )
+        # ]
+
+
+        
+        
             
       
 
@@ -1573,36 +1701,38 @@ class ClassName(ft.Row):
 
 
     def did_mount(self):
-        # for k in list(self.arquiv.get(nome, None).keys())[-1]
-        # for i in self.linha.controls[15:]:
-        #         i.visible = True
+        if self.modotabela:
+            # for k in list(self.arquiv.get(nome, None).keys())[-1]
+            # for i in self.linha.controls[15:]:
+            #         i.visible = True
 
-        # for k in self.estudos.controls:
-        #     for i in k.content.controls[15:]:                  
-        #         i.visible = True
+            # for k in self.estudos.controls:
+            #     for i in k.content.controls[15:]:                  
+            #         i.visible = True
 
-        # print(self.arquiv.get(self.estudo_mais_recente, None)['visiv'])
+            # print(self.arquiv.get(self.estudo_mais_recente, None)['visiv'])
 
 
-        for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
-            i.content.controls[0].value = j
+            for i,j in zip(self.linha.controls[15:],self.arquiv.get(self.estudo_mais_recente, None)['visiv']):
+                i.content.controls[0].value = j
 
-        # for k in self.estudos.controls:
-        #     for i in k.content.controls[15:]:                  
-        #         i.visible = True            
-        self.page.floating_action_button = ft.FloatingActionButton(
-            text = 'Exibir',
-            data = False,
-            bgcolor=ft.colors.SURFACE_VARIANT,
+            # for k in self.estudos.controls:
+            #     for i in k.content.controls[15:]:                  
+            #         i.visible = True            
+            self.page.floating_action_button = ft.FloatingActionButton(
+                text = 'Exibir',
+                data = False,
+                bgcolor=ft.colors.SURFACE_VARIANT,
 
-            on_click=self.Ocultar
-        )
-        # self.Appbar(mostrar=True)
-        self.navigation_bar(mostrar = False)
-        self.page.update()
-        self.update()
-        self.Ocultacao(False)
-        # self.Entrar(1)
+                on_click=self.Ocultar
+            )
+            # self.Appbar(mostrar=True)
+
+            self.navigation_bar(mostrar = False)
+            self.page.update()
+            self.update()
+            self.Ocultacao(False)
+            # self.Entrar(1)
 
     def hoved_barra_lateral(self, e):
         if e.data == 'true':
@@ -1619,7 +1749,6 @@ class ClassName(ft.Row):
         self.barra_lateral.width = 150
         self.barra_lateral.content.visible = True
         self.barra_lateral.update()
-
 
     def Entrar(self, e):
         self.controls = self.controls1
@@ -1638,10 +1767,7 @@ class ClassName(ft.Row):
 
         self.page.update()
         self.update()
-
  
-     
-    
     def Appbar(self, mostrar = True): 
         if mostrar:
             '''   
@@ -1769,10 +1895,7 @@ class ClassName(ft.Row):
                 ]
             )
             self.page.add(rail)
-            
-    
-    
-    
+   
     def navigation_bar(self, mostrar = True):
         if mostrar:
             self.page.navigation_bar = ft.CupertinoNavigationBar(
@@ -1791,8 +1914,6 @@ class ClassName(ft.Row):
                     ]
                 )
 
-
-
     def Ocultar(self,e):
         e.control.data = not e.control.data
         self.Ocultacao(e.control.data)
@@ -1804,11 +1925,10 @@ class ClassName(ft.Row):
             e.control.bgcolor=ft.colors.with_opacity(0.3,ft.colors.SURFACE_VARIANT)
         e.control.update()
 
-
-
-    def Ocultacao(self, sinal):     
+    def Ocultacao(self, sinal):   
+        self.num_coluna_freeze = 3
         if sinal:
-            for i in self.linha.controls[:2]+self.linha.controls[3:15]:
+            for i in self.linha.controls[:self.num_coluna_freeze]+self.linha.controls[self.num_coluna_freeze+1:15]:
                 i.visible = True
 
             for i in self.linha.controls[15:]:
@@ -1820,11 +1940,11 @@ class ClassName(ft.Row):
 
 
             for k in self.estudos.controls:
-                for i in k.content.controls[:2]+k.content.controls[3:15]:
+                for i in k.content.controls[:self.num_coluna_freeze]+k.content.controls[self.num_coluna_freeze+1:15]:
                     i.visible = True                
    
         else:
-            for i in self.linha.controls[:2]+self.linha.controls[3:15]:
+            for i in self.linha.controls[:self.num_coluna_freeze]+self.linha.controls[self.num_coluna_freeze+1:15]:
                 i.visible = False
 
 
@@ -1843,18 +1963,17 @@ class ClassName(ft.Row):
 
 
             for k in self.estudos.controls:
-                for i in k.content.controls[:2]+k.content.controls[3:15]:
+                for i in k.content.controls[:self.num_coluna_freeze]+k.content.controls[self.num_coluna_freeze+1:15]:
                     i.visible = False
 
 
 
-        
-        self.linha.update()
-        self.estudos.update()
+        try:
+            self.linha.update()
+            self.estudos.update()
+        except:
+            pass
         # return sinal
-
-
-
 
     def Nome_estudo_mais_recente(self):
         try:
@@ -1995,11 +2114,11 @@ class ClassName(ft.Row):
 
 
     def Gerar_lista_salvos(self, nome = 'padrão'):         
-         return [[i for j,i in list(self.arquiv.get(nome, None).get(k, None).items())+[(None,self.Salvar)]] for k in list(self.arquiv.get(nome, None).keys())[:-1]]
+         return [[i for j,i in list(self.arquiv.get(nome, None).get(k, None).items())+[(None,self.DeletarItemEstudo)]] for k in list(self.arquiv.get(nome, None).keys())[:-1]]
          
 
     async def Add_nova_linha(self, e):
-        for i in self.linha.controls[:2]+self.linha.controls[3:15]:
+        for i in self.linha.controls[:self.num_coluna_freeze]+self.linha.controls[self.num_coluna_freeze+1:15]:
             i.visible = True
 
         for i in self.linha.controls[15:]:
@@ -2011,13 +2130,34 @@ class ClassName(ft.Row):
 
 
         for k in self.estudos.controls:
-            for i in k.content.controls[:2]+k.content.controls[3:15]:
+            for i in k.content.controls[:self.num_coluna_freeze]+k.content.controls[self.num_coluna_freeze+1:15]:
                 i.visible = True     
 
-        self.estudos.controls.append(Estudo(func=self.Salvar))
+        self.estudos.controls.append(Estudo(func=self.DeletarItemEstudo))
         for n,i in enumerate(self.estudos.controls):
             i.bgcolor = 'transparent' if n%2 == 0 else 'grey,0.3'
 
+
+        self.linhas_coluna_fixa.controls = [ 
+            ft.Container(
+                 ft.TextField(
+                    value = i.item_de_estudo.value,
+                    width=larguras.get("item_de_estudo", 100),
+                    content_padding=ft.Padding(4,0,4,0),
+                    height=48,
+                    # dense=True,
+                    text_style=ft.TextStyle(weight='BOLD'),
+                    text_align=ft.TextAlign.CENTER,
+                    multiline=True,
+                    max_lines = 2,
+                    # expand = True,
+                    # on_change=on_change,
+                ),
+                bgcolor= 'transparent' if n%2 == 0 else 'grey,0.3',
+                
+                )
+                   for n,i in enumerate(self.estudos.controls)]
+        self.linhas_coluna_fixa.update()
         self.estudos.update()
 
     def Salvar(self, e):
@@ -2096,10 +2236,6 @@ class ClassName(ft.Row):
 
         self.estudos.update()
 
-
-
-
-
     def escrever_json(self, data, filename):
         if not filename.endswith('.json'):
             filename += '.json'
@@ -2119,7 +2255,6 @@ class ClassName(ft.Row):
                 pass
             return default or {}
 
-
     def ler_json(self, user_id = 1, default=None):
         r = self.db.LerJson(user_id=user_id)
         if isinstance(r, dict):
@@ -2127,6 +2262,33 @@ class ClassName(ft.Row):
         else:
             return default or {}     
 
+    def DeletarItemEstudo(self,e):
+        self.estudos.controls.remove(e)
+        self.estudos.update()
+
+
+    def ScrolIntervalo(self, e):
+        a=e
+        # for i in ['target', 'name', 'data', 'control', 'page', 'event_type', 'pixels', 'min_scroll_extent', 'max_scroll_extent', 'viewport_dimension', 'scroll_delta', 'direction', 'overscroll', 'velocity']:
+        #     print(f'{i}:', e.__dict__[i])
+        # print('pixel:', e.pixels)
+        if e.pixels > 150:
+             self.coluna_fixa.visible = True
+        else:
+             self.coluna_fixa.visible = False
+        self.coluna_fixa.update()
+    
+
+    def Rolar_coluna_fixa(self, e):
+        delta = e.scroll_delta
+        self.coluna_fixa.visible = True
+        self.linhas_coluna_fixa.scroll_to(delta = delta, duration = 0)
+        # self.linhas_coluna_fixa.on_scroll_interval = e.pixels
+        # e.target = '_265'
+        # e.pixels = 300
+        self.linhas_coluna_fixa.update()
+        self.coluna_fixa.update()
+      
 
 
 
@@ -2135,8 +2297,9 @@ def main(page: ft.Page):
     # Definindo o titulo da pagina
     page.title = 'Estudo de Guitarra'
     page.window.width = 500  # Define a largura da janela como 800 pixels
-    page.window.height = 385  # 
+    page.window.height = 800  # 
     page.spacing=2
+
     # page.bgcolor = '#75a64d'
 
 
@@ -2474,8 +2637,9 @@ def main(page: ft.Page):
             content = p,
             expand=True,
     ))
-
-    page.add(pl    
+    tema = TemaSelectSysten()
+    tema.visible = False
+    page.add(p,tema
 
     )
 
@@ -2485,6 +2649,6 @@ def main(page: ft.Page):
 if __name__ == '__main__': 
     ft.app(target=main,
             # port=5000, 
-            # view=ft.AppView.WEB_BROWSER
+            # view=ft.AppView.FLET_APP_WEB
     )
 

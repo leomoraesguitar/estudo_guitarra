@@ -1,0 +1,101 @@
+{
+    "materia1": {
+        "treinos": {
+            "None do Treino": [
+                "a",
+                "b",
+                "c"
+            ],
+            "None do Treino2": [
+                "a2",
+                "b2",
+                "c2"
+            ],
+            "treino 2": [
+                "a1",
+                "a2",
+                "a3"
+            ],
+            "Treino A": [
+                "1NPC_MD",
+                "3NPC_MD",
+                "penta 2NPC",
+                "escala 3NPC"
+            ],
+            "Treino B": [
+                "ligados - roger franco",
+                "tapping penta",
+                "arpegios"
+            ],
+            "sadfasda": [
+                "sdf",
+                "sdf",
+                "sdf",
+                "gbg",
+                "vbd",
+                "gfd",
+                "d"
+            ],
+            "sdsdsd": [
+                "asd"
+            ],
+            "novo trama video": [
+                "dsfsd",
+                "sdfsd",
+                "sdfsdf"
+            ]
+        },
+        "dias": {
+            "seg": "None do Treino2",
+            "ter": "treino 2",
+            "qua": "treino 2",
+            "qui": "sadfasda",
+            "sex": "treino 2",
+            "sab": "None do Treino",
+            "dom": "None do Treino"
+        }
+    },
+    "mat2": {
+        "treinos": {
+            "": [],
+            "traino A mat2": [
+                "a3"
+            ],
+            "treino 2 mat2 ": [
+                "s",
+                "d"
+            ]
+        },
+        "dias": {
+            "dom": "",
+            "seg": "",
+            "ter": "",
+            "qua": "",
+            "qui": "",
+            "sex": "",
+            "sab": ""
+        }
+    },
+    "novembro": {
+        "treinos": {
+            "Triano A": [
+                "1NPC_MD",
+                "3NPC_MD",
+                "ligados - roger franco",
+                "tapping penta",
+                "arpegios",
+                "penta 2NPC",
+                "escala 3NPC"
+            ]
+        },
+        "dias": {
+            "dom": "Triano A",
+            "seg": "Triano A",
+            "ter": "",
+            "qua": "",
+            "qui": "",
+            "sex": "",
+            "sab": ""
+        }
+    }
+}

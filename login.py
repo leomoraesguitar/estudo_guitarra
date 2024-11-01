@@ -22,10 +22,10 @@ class LoginG(ft.Container):
         super().__init__()
         self.alignment=ft.alignment.center  
         self.expand = True
-        self.image = ft.DecorationImage(
-            src =  "git.png",  # URL da imagem de fundo
-            fit = ft.ImageFit.FILL
-        )
+        self.image_fit = ft.ImageFit.COVER
+        self.image_src = "git.png",  # URL da imagem de fundo
+        #     fit = ft.ImageFit.FILL
+        # )
         # self.image_src = "git.png"
         # self.image_fit = ft.ImageFit.FILL
         self.app = app
@@ -461,7 +461,10 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
     page.add(LoginG())
 if __name__ == '__main__': 
-    ft.app(target=main)
+    ft.app(target=main, 
+           port=5000, 
+         view=ft.AppView.FLET_APP_WEB  
+    )
 
 
 
