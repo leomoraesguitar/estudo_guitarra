@@ -2294,7 +2294,7 @@ def main(page: ft.Page):
         pass
 
       
-    bb = ft.BorderSide(1,'blue')
+    bb = ft.BorderSide(5,'#403333')
     def Contain(content, width = None):
         return ft.Container(
             content = content,

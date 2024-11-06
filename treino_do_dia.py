@@ -396,11 +396,11 @@ class TreinosDiarios(ft.Column):
         self.lista_treinos = self.arquiv[self.treinos.materia.value]['treinos'].get(self.treino_hoje, None)
         # try:
         nome_do_treino = self.treino_hoje
-        print('nome_do_treino', nome_do_treino)
+        # print('nome_do_treino', nome_do_treino)
         estudos = self.arquiv_estudos.get(nome_do_treino,None)
         if isinstance(estudos, dict):
             data_mais_recente = list(estudos.keys())[-1]
-            print('data_mais_recente',data_mais_recente)
+            # print('data_mais_recente',data_mais_recente)
             self.lista_valores_estudos =  estudos[data_mais_recente]
         # print(self.lista_valores_estudos)
             self.lista_estudos = [Estudos(i,b) for i,b in zip(self.lista_treinos,self.lista_valores_estudos)]
@@ -409,7 +409,7 @@ class TreinosDiarios(ft.Column):
                 self.lista_estudos = [Estudos(i,None) for i in self.lista_treinos]
             else:
                 self.lista_estudos = []
-        print(self.lista_estudos)
+        # print(self.lista_estudos)
     def SalvarEstudoFeito2(self, e):
         valores = [int(float(i.bpm)) for i in self.lista_estudos ]
         self.arquiv_estudos = self.treinos.ler_json(
