@@ -1,6 +1,7 @@
 import flet as ft
 import datetime
 import json
+from os import path, environ,mkdir
 # from time import sleep
 
 '''
@@ -92,11 +93,12 @@ class Linha(ft.Row):
             hint_text='Nome do estudo',
             # suffix= self.btn_add_novo_treino,
             dense = True,
-            width=270,
+            # width=270,
+            expand=True,
             border_width=1,
             content_padding=8,
             value = value,
-            border_radius=8,
+            border_radius=12,
         )
         self.controls = [
             ft.Container(
@@ -219,42 +221,265 @@ class Gestos(ft.Stack):
             return default or {}
 
 
+
+
+class Verificar_pasta:
+    def __init__(self,pastalocal = 'Guitarra'):
+        self.pastalocal = pastalocal
+        self.verificar_pasta()
+
+    def verificar_pasta(self):
+        user_profile = environ.get('USERPROFILE')
+        # print(user_profile)
+        if not user_profile:
+            # return False  # USERPROFILE não está definido
+            self.local = None
+
+        caminho = path.join(user_profile, self.pastalocal)
+        
+        if path.exists(caminho):
+            self.local = caminho
+            # return self.caminho
+        else:
+            mkdir(caminho)
+            # print(caminho)
+            if path.exists(caminho):
+                self.local = caminho
+                # return self.caminho
+            # else:
+                # return None
+    
+
+    def caminho(self, nome):
+        # self.verificar_pasta()
+        return path.join(self.local, nome)
+
+
+class Poupup:
+    def __init__(self, 
+                 title = None, 
+                 funcao = None,
+                 page = None,
+                 texto =None,
+                 nomes_botoes = ['Sim', 'Não'],
+                content = None
+                 ):
+        super().__init__()
+        self.page = page
+        self.title = title
+        self._content = content
+        self._funcao = funcao
+        self._texto = texto
+        self.dialogo1 = ft.AlertDialog(
+            modal=False,
+            open = True,
+            title=ft.Row([ft.Text(self.title, weight='BOLD')],alignment='center'),
+            shadow_color = ft.colors.TRANSPARENT,
+            content_padding = ft.Padding(15,0,15,0),
+            actions_padding = ft.Padding(0,10,0,0),
+            title_padding = ft.Padding(4,0,4,0),
+            
+            bgcolor=ft.colors.GREY_900,
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            alignment =ft.alignment.top_center,
+        )
+        if self._content != None:
+            if isinstance(self._content, list):
+                self.dialogo1.content = ft.Column([ft.Text(self._texto)], tight=True)
+                self.dialogo1.content.controls += [i for i in self._content]
+
+            else:
+                self.dialogo1.content = ft.Column([ft.Text(self._texto)], tight=True)
+                self.dialogo1.content.controls += [self._content]  
+        
+
+
+        
+        if self._funcao != None:
+            self.dialogo1.modal=True
+
+            self.dialogo1.actions = [
+                ft.Row([
+                    ft.Container(
+                        bgcolor = ft.colors.with_opacity(1, ft.colors.GREY_500),
+                        border_radius = ft.BorderRadius(0,0,20,0),
+                        on_click=self.yes_click,
+                        padding= ft.Padding(0,10,0,10),
+                        content = ft.Text(
+                            nomes_botoes[0], 
+                            weight = "BOLD", 
+                            text_align='center',
+                            size = 15,
+                             color=ft.colors.PRIMARY,
+                        ),
+                        expand=True,
+                    ),
+                    ft.Container(
+                        bgcolor = ft.colors.with_opacity(1, ft.colors.RED),
+                        border_radius = ft.BorderRadius(0,0,0,20),
+                        on_click=self.no_click,
+                        padding= ft.Padding(0,10,0,10),
+                        content = ft.Text(
+                            nomes_botoes[1],
+                              weight = "BOLD", 
+                              text_align='center',
+                              size = 15,
+                              color=ft.colors.PRIMARY,
+                            ),
+                        expand=True,
+                    ),
+                                     
+                ],
+                spacing = 0,
+                expand= True)
+        
+            ]
+
+        self.page.overlay.append(self.dialogo1)
+        self.page.update()
+
+    @property
+    def content(self):
+        return self._content
+    @content.setter
+    def content(self, valor):
+        self._content = valor
+        if self._content != None and isinstance(self._content, list):
+            self.dialogo1.content = ft.Column([ft.Text(self._texto)])
+            self.dialogo1.content.controls += [i for i in self._content]
+        elif isinstance(self._content, str) | isinstance(self._content, int):
+            self.dialogo1.content.controls[0].value = self._texto
+        
+        self.dialogo1.update() 
+
+
+
+    @property
+    def texto(self):
+        return self._texto
+    @texto.setter
+    def texto(self, valor):
+        self._texto = valor
+        if isinstance(self._content, str) | isinstance(self._content, int):
+            self.dialogo1.content.controls[0].value = self._texto        
+            self.dialogo1.update() 
+        
+
+        
+
+    @property
+    def funcao(self):
+        return self._funcao
+    @funcao.setter
+    def funcao(self, valor):
+        self._funcao = valor
+        if self._funcao != None:
+            self.dialogo1.modal=True
+            self.dialogo1.actions = [
+                ft.CupertinoDialogAction(
+                'Sim',
+                text_style=ft.TextStyle(italic=True),
+                is_destructive_action=True,
+                on_click=self.yes_click
+            ),
+                ft.CupertinoDialogAction(text='Não', is_default_action=False, on_click=self.no_click),
+
+            ]
+        self.dialogo1.update() 
+
+
+
+
+
+    def yes_click(self,e):
+        if self._funcao != None:
+            self._funcao(e)
+        # sleep(0.5)
+        self.dialogo1.open = False
+        self.page.update()
+
+
+    def no_click(self,e):
+        self.dialogo1.open = False
+        self.page.update()
+    
+
+    def print_in_dialog(self, texto):
+        # self.saida_dialog.value = texto
+        # self.dialogo1.Content.update()
+        self.dialogo1.content.controls[0].value = texto
+        self.dialogo1.update() 
+    
+
+
+    def Escrever_json(self, nomedodicionario, nomedoarquivo):
+        if nomedoarquivo[-4:] != 'json':
+            nomedoarquivo = nomedoarquivo+'.json'
+        with open(nomedoarquivo, 'w') as f2:
+            json.dump(nomedodicionario, f2, indent=4)
+
+    def Ler_json(self, nomedoarquivo):  # retorna um dicionário
+        if nomedoarquivo[-4:] != 'json':
+            nomedoarquivo = nomedoarquivo+'.json'
+        with open(nomedoarquivo, 'r') as f2:
+            try:
+                a = json.load(f2)
+                return a
+            except json.JSONDecodeError as e:
+                print(f'Erro ao decodificar JSON: {e}')
+                return {}
+
+
 class Treinos(ft.Column):
     def __init__(self, page):
         super().__init__()
         self.page = page
+
         self.expand = True
         self.cont = 0
-        self.default = {"materia1":{
-            'treinos':{
-            'None do Treino':['a', 'b', 'c'],
-            'None do Treino2':['a2', 'b2', 'c2'],
-            },
-            'dias':{
-                'seg':None,
-                'ter':None,
-                'qua':None,
-                'qui':None,
-                'sex':None,
-                'sab':None,
-                'dom':None
+        self.default = {
+            "materia1":{
+                'treinos':{
+                'None do Treino':['a', 'b', 'c'],
+                'None do Treino2':['a2', 'b2', 'c2'],
+                },
+                'dias':{
+                    'seg':None,
+                    'ter':None,
+                    'qua':None,
+                    'qui':None,
+                    'sex':None,
+                    'sab':None,
+                    'dom':None
+                },
+                'data':'31-10-2024'   
             }
-        }}
-        self.nome_arq_treino = r'assets/treinos.json'
-        self.arquiv = self.ler_json(
-            self.nome_arq_treino,
-            default=self.default
-            )
+        }
+        pasta = Verificar_pasta()
+        self.nome_arq_treino = pasta.caminho('treinos.json')        
+        # self.nome_arq_treino = r'assets/treinos.json'
 
+        style_btn = ft.ButtonStyle(
+            color='#92BBEA',
+            bgcolor = '#41444b',
+            text_style = ft.TextStyle(
+                size=12,
+                weight='BOLD',
+                
+            ),
+        )
         self.btn_add_materia =  ft.FilledButton(
             text='Add',
             on_click=self.AddMateria,
-            col = 2,
+            col = {'xs':6, 'sm':2},
+            style=style_btn,
         )
         self.btn_del_materia =  ft.FilledButton(
             text='Del',
-            col = 2,
-            # on_click=self.SalvarTreino,
+            col ={'xs':6, 'sm':2},
+            on_click=self.DeletarMateria,
+            style=style_btn,
+
         )
 
         self.novo_nome_materia = ft.TextField(
@@ -288,13 +513,12 @@ class Treinos(ft.Column):
         self.materia = ft.Dropdown(
             label = 'Materias',
             # width=150,
-            col = 8,
+            col = {'xs':12, 'sm':8},
             border_width=1,
             dense = True,
             on_change=self.EscolherMateria,
-            border_radius=8,
+            border_radius=12,
         )
-     
 
         self.treinos = ft.Dropdown(
             label = 'Treinos',
@@ -302,20 +526,19 @@ class Treinos(ft.Column):
             border_width=1,
             dense = True,
             on_change=self.EscolherTreino,
-            border_radius=8,
+            border_radius=12,
             
         )
-            
-
 
         self.nome_novo_treino = ft.TextField(
             hint_text='Nome do Treino',
             # suffix= self.btn_add_novo_treino,
             dense = True,
-            width=265,
+            # width=265,
+            expand=True,
             border_width=1,
             content_padding=12,
-            border_radius=8,
+            border_radius=12,
         )
 
         self.modo_automatico = ft.Checkbox(
@@ -355,8 +578,8 @@ class Treinos(ft.Column):
             
         )
 
-
         self.data_select = SelecionarData(self.Set_data_inicial)
+        
         self.data_inicial = ft.Text('27-10-2024')
         self.btn_add_linha = ft.IconButton(
             icon=ft.icons.ADD,
@@ -377,17 +600,19 @@ class Treinos(ft.Column):
         self.btn_novo_treino = ft.FilledTonalButton(
             text='Criar treino',
             on_click=self.Add_Novo_treino,
+            style=style_btn,
+            col = {'xs':12, 'sm':6},
+
         )
         self.btn_salvar_treino = ft.FilledButton(
             text='Salvar treino',
             on_click=self.SalvarTreino,
+            style=style_btn,
+            col = {'xs':12, 'sm':6},
         )
         # self.btn_add_novo_treino = ft.FilledButton(
         #     text = 'Add.',
         # )        
-                    
-            
-
 
         self.barra_lateral = ft.Column(
             controls = [
@@ -399,26 +624,27 @@ class Treinos(ft.Column):
                 self.modo_automatico,                
                 self.modo_manual,
                 self.linha_dias_da_semana, 
-                ft.Row(
+                ft.ResponsiveRow(
                     [self.btn_novo_treino,  self.btn_salvar_treino,],
                     alignment='center',
                 ),
                              
 
             ],
-            width=300,
+            width=270,
+            # expand=True,
             spacing=5,
 
         )
 
         self.tela_treinos = ft.Column(
              controls = [
-                ft.Row([self.nome_novo_treino,self.btn_add_linha]),
+                ft.Row([self.nome_novo_treino,self.btn_add_linha],),
                 self.linhas,                 
             ],
-            width=310,
+            width=245,
             alignment=ft.MainAxisAlignment.START,
-            expand=True,
+            # expand_loose=True,
         )
 
 
@@ -436,6 +662,7 @@ class Treinos(ft.Column):
                         self.btn_del_materia,
                     ],
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    expand=True,
                 ),
                 gradient = ft.LinearGradient(
                     end=ft.alignment.center_left,
@@ -448,9 +675,9 @@ class Treinos(ft.Column):
                 border_radius=20,
 
             ),            
-            ft.Row(
+            ft.ResponsiveRow(
                [ 
-                   ft.Container(              
+                    ft.Container(              
                         self.barra_lateral,
                         gradient = ft.LinearGradient(
                             end=ft.alignment.center_left,
@@ -461,7 +688,7 @@ class Treinos(ft.Column):
                         ),
                         padding=ft.Padding(10,10,10,10),
                         border_radius=20,
-
+                        col = 6,
                     ),
                     ft.Container(              
                         self.tela_treinos,
@@ -474,6 +701,7 @@ class Treinos(ft.Column):
                         ),
                         padding=ft.Padding(10,10,10,10),
                         border_radius=20,
+                        col = 6,
 
                     ),                    
                 ],
@@ -490,7 +718,7 @@ class Treinos(ft.Column):
     def CarregarModos(self):
         try:
             valor_modo = self.page.client_storage.get(f'{self.page.title}_Modo_Automatico')
-            print('valor_modo', valor_modo)
+            # print('valor_modo', valor_modo)
         except:
             valor_modo = True
         # sleep(1)
@@ -521,6 +749,8 @@ class Treinos(ft.Column):
             default=self.default
             )
         self.arquiv[self.materia.value]['treinos'][nome] = estudos
+
+        self.arquiv[self.materia.value]['data'] = self.data_inicial.value
         self.escrever_json(self.arquiv, self.nome_arq_treino)
         self.Carregar_treinos()
         self.treinos.update()
@@ -536,9 +766,6 @@ class Treinos(ft.Column):
                 self.nome_arq_treino,
                 default=self.default
                 )
-
-
-
 
             nome = self.nome_novo_treino.value
             estudos = [i.value for i in self.linhas.controls]
@@ -561,7 +788,9 @@ class Treinos(ft.Column):
             self.escrever_json(self.arquiv, self.nome_arq_treino)
             self.Carregar_treinos()
             self.treinos.update()
-            self.linha_dias_da_semana.update()            
+            self.linha_dias_da_semana.update()  
+        self.CancelarNovaMateria(1)
+
 
     def Modo_operacao(self, e):
         if e.control.label == 'Modo Automático':
@@ -572,15 +801,17 @@ class Treinos(ft.Column):
         self.modo_manual.update()
         self.modo_automatico.update()
 
-
-
     def Escrever_treino_noarquivo(self, treino):
         with open(r'assets/treinos.txt', 'a') as arq:
             arq.write(f'{treino}\n')
 
     def Carregar_treinos(self):
         # with open(r'assets/treinos.txt', 'r') as arq:
-        #     treinos = arq.read()        
+        #     treinos = arq.read()    
+        self.arquiv = self.ler_json(
+            self.nome_arq_treino,
+            default=self.default
+            )     
         self.lista_materias =  list(self.arquiv.keys())  
         self.materia.options = [] 
         for materia in self.lista_materias:
@@ -590,7 +821,7 @@ class Treinos(ft.Column):
         if self.materia.value == None:
             try:
                 value_materia = self.page.client_storage.get(f'{self.page.title}_materia')
-                if value_materia:
+                if value_materia and value_materia in self.lista_materias:
                     self.materia.value = value_materia
                 else:
                     self.materia.value = self.lista_materias[0]
@@ -624,6 +855,13 @@ class Treinos(ft.Column):
         for i in nomes_dias: 
             self.dias[i].value = self.arquiv[self.materia.value]['dias'][i]
 
+        treino = self.treinos.value
+        estudos = self.arquiv[self.materia.value]['treinos'].get(treino, None)
+        if not estudos is None:
+            self.linhas.controls = [Linha(i, self.Deletar) for i in estudos]
+            self.nome_novo_treino.value = treino
+        self.data_inicial.value = self.arquiv[self.materia.value].get('data','01-10-2024')
+
     def EscolherMateria(self, e):
         materia = self.materia.value
         self.page.client_storage.set(f'{self.page.title}_materia', materia)
@@ -647,9 +885,8 @@ class Treinos(ft.Column):
         self.nome_novo_treino.value = treino
         self.nome_novo_treino.update()
         self.linhas.update()
-
-
-
+        # self.data_inicial.value = self.arquiv[self.materia.value]['data'].get('data','01-10-2024')
+        # self.data_inicial.update()
 
     def SelecionarTreinoDia(self, e):
         dia = e.control.label
@@ -670,6 +907,8 @@ class Treinos(ft.Column):
 
     def exercicio_do_dia(self):
         # Converte a data inicial e a data atual para o formato datetime
+        self.Carregar_treinos()
+
         if self.modo_automatico.value == True:
             data_inicial = self.data_inicial.value
             data_inicial = datetime.datetime.strptime(data_inicial, "%d-%m-%Y")
@@ -689,10 +928,6 @@ class Treinos(ft.Column):
             # print('dia hoje:',dia_hoje )
             nomes_dias = ['dom','seg', 'ter', 'qua', 'qui', 'sex', 'sab' ]
             return self.dias.get(nomes_dias[dia_hoje], 'Não definido').value
-
-              
-
-
 
     def Add_linha_de_treino(self, e):
         # linha = ft.Row(
@@ -723,7 +958,6 @@ class Treinos(ft.Column):
         # self.linhas.Add_control(nome, Linha(on_click = self.Deletar,data = nome))
         self.linhas.update()
 
-
     def AddMateria(self, e):
         self.novo_nome_materia.visible = True
         self.novo_nome_materia.update()
@@ -742,7 +976,34 @@ class Treinos(ft.Column):
         for _,i in self.dias.items():
             i.value = None
         self.linha_dias_da_semana.update()
-        
+
+    def DeletarMateria(self, e):
+        valor = self.materia.value
+        pop = ft.AlertDialog(
+            open = True,
+            modal = False,
+            title = ft.Row([ft.Text('CUIDADO!', weight='BOLD')]),
+            content = ft.Column([ft.Text(  'meu poau')]),
+            # actions: List[Control] | None = None,
+            # on_dismiss: OptionalControlEventCallable = None,
+            # ref: Ref | None = None,
+            # disabled: bool | None = None,
+            # visible: bool | None = None,
+            # data: Any = None
+        )
+  
+
+
+        # for i in self.materia.options:
+        #     if i.key == valor:
+        #         self.materia.options.remove(i)    
+        # self.materia.update()
+        # self.arquiv = self.ler_json(
+        #     self.nome_arq_treino,
+        #     default=self.default
+        #     )
+        # del self.arquiv[valor]      
+            
 
     def CancelarNovaMateria(self, e):
         self.novo_nome_materia.visible = False
@@ -760,6 +1021,7 @@ class Treinos(ft.Column):
         #     if i.data == e.control.data:
         #         del self.linhas.controls[n]
         self.linhas.update()
+
 
 
     def escrever_json(self, data, filename):
@@ -784,8 +1046,8 @@ class Treinos(ft.Column):
 def main(page: ft.Page):
     # Definindo o t�tulo da p�gina
     page.title = 'Treinos'
-    page.window.width = 700  # Define a largura da janela como 800 pixels
-    page.window.height = 700  # 
+    page.window.width = 685  # Define a largura da janela como 800 pixels
+    page.window.height = 683  # 
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(
         scrollbar_theme = ft.ScrollbarTheme(

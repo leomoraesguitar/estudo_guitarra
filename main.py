@@ -1,20 +1,19 @@
 
 
 import flet as ft
-import sys
-import subprocess
+# import sys
+# import subprocess
 
 import os
 import json
 from login import LoginG
 # from bancodadosmysql import DatabaseManager
-from temaselectsysten import TemaSelectSysten
 from time import sleep
-from treino_do_dia import Treinos, TreinosDiarios
+from treino_do_dia import TreinosDiarios, TemaSelectSysten,ConfirmarSaidaeResize, Verificar_pasta
 from dotenv import load_dotenv
-from flet.auth.providers import GoogleOAuthProvider, GitHubOAuthProvider
-import random
-import string
+# from flet.auth.providers import GoogleOAuthProvider, GitHubOAuthProvider
+# import random
+# import string
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -25,105 +24,6 @@ login = os.getenv("ADM_ESTUDO_GUITARRA")
 
 
 #rciar uma janela para edtar o json dos dados
-
-
-class ConfirmarSaidaeResize:
-    def __init__(self,page, funcao = None, exibir = True, width_min = None, height_min = None):
-        super().__init__()
-        self.page = page
-        self.funcao = funcao
-        self.width_min = width_min
-        self.height_min = height_min
-        self.confirm_dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Confirme!"),
-            content=ft.Text("Deseja realmente fechar o App?"),
-            actions=[
-                ft.ElevatedButton("Sim", on_click=self.yes_click),
-                ft.OutlinedButton("Não", on_click=self.no_click),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-        )
-        self.page.window.on_event = self.window_event
-        self.page.window.prevent_close = True 
-
-        self.page.on_resized = self.page_resize
-        # self.page.window.on_event = self.page_resize
-        self.nome = f'{self.page.title}_tamanho'
-        self.exibir = exibir
-        if self.exibir:
-            self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
-            self.page.overlay.append(self.pw) 
-        self.Ler_dados() 
-
-
-    async def window_event(self, e):
-            await self.page_resize(e)
-            if e.data == "close":
-                self.page.overlay.append(self.confirm_dialog)
-                
-                self.confirm_dialog.open = True
-                self.page.update()
-
-    def yes_click(self,e):
-        if self.funcao not in ['', None]:
-            self.funcao(e)
-        self.page.window.destroy()
-
-    def no_click(self,e):
-        self.confirm_dialog.open = False
-        self.page.update()
-
-
-
-    async def page_resize(self, e):
-        if self.exibir:
-            self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
-            self.pw.update()
-        valores = [self.page.window.width,self.page.window.height,self.page.window.top,self.page.window.left]
-
-        if valores[1]< self.height_min:
-            valores[1] = self.height_min
-        if valores[0]< self.width_min:
-            valores[0] = self.width_min      
-        if valores[2] <0:
-              valores[2] = 0   
-        if valores[3] <0:
-              valores[3] = 0                
-        # with open('assets/tamanho.txt', 'w') as arq:
-        #     arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
-        await self.page.client_storage.set_async(self.nome, f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
-        
-
-  
-
-    def Ler_dados(self):
-        try:
-            # with open('assets/tamanho.txt', 'r') as arq:
-            #     po = arq.readline()
-
-            po = self.page.client_storage.get(self.nome)
-
-            p1 = po.split(',')
-            p = [int(float(i)) for i in p1]
-            po = p[:4] 
-
-            if po[0]< self.width_min:
-                po[0] = self.width_min   
-            if po[1]< self.height_min:
-                po[1] = self.height_min 
-            if po[2] <0:
-                po[2] = 0   
-            if po[3] <0:
-                po[3] = 0                                   
-
-            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
-            # print('acerto')
-        except:
-            # print('erro!')
-            # with open('assets/tamanho.txt', 'w') as arq:
-            #     arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
-            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = self.width_min,self.height_min,0,0
 
 
 # class Resize:
@@ -920,38 +820,6 @@ def MeuCampoTexto(nome = None, width = None,on_change = None, bold = False):
         expand = True,
         on_change=on_change,
     )
-
-
-class Verificar_pasta:
-    def __init__(self,pastalocal = 'tabelamandadostjse'):
-        self.pastalocal = pastalocal
-        self.verificar_pasta()
-
-    def verificar_pasta(self):
-        user_profile = os.environ.get('USERPROFILE')
-        # print(user_profile)
-        if not user_profile:
-            # return False  # USERPROFILE não está definido
-            self.local = None
-
-        caminho = os.path.join(user_profile, self.pastalocal)
-        
-        if os.path.exists(caminho):
-            self.local = caminho
-            # return self.caminho
-        else:
-            os.mkdir(caminho)
-            # print(caminho)
-            if os.path.exists(caminho):
-                self.local = caminho
-                # return self.caminho
-            # else:
-                # return None
-    
-
-    def caminho(self, nome):
-        # self.verificar_pasta()
-        return os.path.join(self.local, nome)
 
 
 
@@ -2296,16 +2164,39 @@ class ClassName(ft.Row):
 def main(page: ft.Page):
     # Definindo o titulo da pagina
     page.title = 'Estudo de Guitarra'
-    page.window.width = 500  # Define a largura da janela como 800 pixels
-    page.window.height = 800  # 
-    page.spacing=2
-
-    # page.bgcolor = '#75a64d'
+    page.window.width = 620  # Define a largura da janela como 800 pixels
+    page.window.height = 625  # 
+    page.spacing=0
+    page.padding = 0
+    
+    page.bgcolor = ft.colors.TRANSPARENT
+    page.window.bgcolor = ft.colors.TRANSPARENT
+    # page.window.min_height = 500
+    # page.window.min_width = 300
+    page.window.opacity = 1
+    # page.window.frameless = True
+    # page.window.title_bar_buttons_hidden = True
+    page.window.title_bar_hidden = True
+    page.window.resizable = True
+    
 
 
     page.theme_mode = ft.ThemeMode.DARK
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.MainAxisAlignment.START
+    black2 =  {
+        "primary": "cyan300",
+        "on_primary": "black",
+        "on_secondary_container": "cyan",
+        "outline": "bluegrey",
+        "shadow": "lightblue",
+        "on_surface_variant": "amber",
+        "surface_variant": "white30",
+        "primary_container": "amber",
+        "on_surface": "lightblue",
+        "surface": "grey800",
+
+    }    
     page.theme = ft.Theme(
         scrollbar_theme = ft.ScrollbarTheme(
             thickness = {
@@ -2315,17 +2206,18 @@ def main(page: ft.Page):
                   },
         ),
         use_material3 = True,
+
         color_scheme=ft.ColorScheme(
-            primary = ft.colors.WHITE70, # cor fundo filledbutton e cor texto outlinedbutton
-            on_primary = ft.colors.BLACK, #cor texto filledbutton e cor da bolinha do swicth com True
-            secondary_container = ft.colors.GREY_700, # cor de fundo filledtonalbutton
-            on_secondary_container = ft.colors.WHITE, # cor de tecto filledtonalbutton
-            outline = ft.colors.GREY_600, #cor de borda do outliedbutton
-            shadow = ft.colors.BLUE_300, # cor das sombras
-            on_surface_variant = ft.colors.WHITE, #cor dos labela
-            surface_variant = ft.colors.GREY_600, #cor do slider e cor de fundo do texfield
-            primary_container = ft.colors.WHITE70, #cor da bolinha do switch
-            on_surface = ft.colors.WHITE, #cor HOVERED do checkbox
+            primary = black2['primary'], # cor fundo filledbutton e cor texto outlinedbutton
+            on_primary = black2['on_primary'], #cor texto filledbutton e cor da bolinha do swicth com True
+            # secondary_container = black2['secondary_container'], # cor de fundo filledtonalbutton
+            on_secondary_container = black2['on_secondary_container'], # cor de tecto filledtonalbutton
+            outline = black2['outline'], #cor de borda do outliedbutton
+            shadow = black2['shadow'], # cor das sombras
+            on_surface_variant = black2['on_surface_variant'], #cor dos labela
+            surface_variant = black2['surface_variant'], #cor do slider e cor de fundo do texfield
+            primary_container = black2['primary_container'], #cor da bolinha do switch
+            on_surface = black2['on_surface'], #cor HOVERED do checkbox
 
         ),
         divider_theme=ft.DividerTheme(
@@ -2376,7 +2268,7 @@ def main(page: ft.Page):
     )    
 
 
-
+    '''
     provider_google = GoogleOAuthProvider(
         client_id=os.getenv("CLIENT_ID_GITHUB__GG"),
         client_secret=os.getenv('CLIENT_SECRET_GITHUB__GG'),
@@ -2387,244 +2279,61 @@ def main(page: ft.Page):
         client_secret=os.getenv('CLIENT_SECRET_GITHUB'),
         redirect_url='http://127.0.0.1:5000/api/oauth/redirect'
     )    
+    '''
     saida = Saida(page)
     # print = saida.pprint 
     # Resize2(page)
     # Resize(page, exibir=False)
     page.update()
     p = ClassName( page,pprint = saida.pprint)
+
     def sair(e):
-        p.Salvar(e)
-        if p.db:
-            p.db.fechar_conexao(e)
+        # p.Salvar(e)
+        # if p.db:
+        #     p.db.fechar_conexao(e)
+        pass
 
       
-               
-    ConfirmarSaidaeResize(page,exibir=False, funcao=sair, width_min=723,height_min=656)
-    # ConfirmarSaidaeResize(page,exibir=False, funcao=sair)
-
-    # def entrar(e):
-    #     match e.data:
-    #         case 'login':
-    #             page.remove(cadastrar_user)
-    #             page.add(loggg)
-    #             page.update()
-
-    #         case 'logado':
-    #             print('aqui')
-    #             page.remove(loggg)
-    #             page.add(p)
-    #             page.update()
-
-    # def abrirtela(e):
-    #     match e.control.data:
-    #         case 'telacadastro':
-    #             if loggg in page.controls:
-    #                 page.remove(loggg)
-    #                 page.add(cadastrar_user)
-    #                 page.update()  
-
-    #         case 'telalogin':
-    #             if cadastrar_user in page.controls:
-    #                 page.remove(cadastrar_user)
-    #                 page.add(loggg)
-    #                 page.update()                        
-
-    # def fazerlogin(e):
-    #     match e.control.data:
-    #         case 'google':
-    #             page.login(provider = provider_google)
-    #         case 'Github':
-    #             page.login(provider = provider_git)   
-
-    # def gerar_senha():
-    #     # Lista de caracteres especiais
-    #     caracteres_especiais = '!@#$%^&*()'
-        
-    #     # Gera um caractere maiúsculo aleatório
-    #     letra_maiuscula = random.choice(string.ascii_uppercase)
-        
-    #     # Gera um caractere especial aleatório
-    #     caractere_especial = random.choice(caracteres_especiais)
-        
-    #     # Gera 4 caracteres aleatórios (podem ser letras minúsculas, maiúsculas ou dígitos)
-    #     caracteres_aleatorios = random.choices(string.ascii_letters + string.digits, k=4)
-        
-    #     # Combina todos os caracteres
-    #     senha = [letra_maiuscula, caractere_especial] + caracteres_aleatorios
-        
-    #     # Embaralha os caracteres para garantir aleatoriedade
-    #     random.shuffle(senha)
-        
-    #     # Converte a lista para string e retorna
-    #     return ''.join(senha)
-
-    
-
-
-    # async def onlogin(e):
-    #     loggg.content.visible = False
-    #     cadastrar_user.content.visible = False
-    #     page.update()        
-    #     if cadastrar_user in page.controls:
-    #         usuario = page.auth.user['email']
-    #         usuarios = list(loggg.content.controls[1].senhas.keys())
-    #         if not usuario in usuarios:
-    #             senha = gerar_senha()
-    #             cadastrar_user.content.controls[1].senhas[usuario] = senha
-    #             cadastrar_user.content.controls[1].escrever_json(cadastrar_user.content.controls[1].senhas, 'assets\senhas.json' )
-    #             e.data = 'login'
-    #             entrar(e)              
-    #         else:
-    #             dialog = ft.AlertDialog(title=ft.Text("Usuário já cadastrado"))
-    #             dialog.open = True
-    #             page.overlay.append(dialog)
-
-    #             page.update()    
-    #         loggg.content.visible = True
-    #         cadastrar_user.content.visible = True                
-    #         page.update()
-
-    #     elif loggg in page.controls:
-    #         usuario = page.auth.user['email']
-    #         usuarios = list(loggg.content.controls[1].senhas.keys())
-    #         if usuario in usuarios:
-    #             await page.client_storage.set_async("login", True)
-    #             e.data = 'logado'
-    #             entrar(e)
-    #         else:
-    #             dialog = ft.AlertDialog(title=ft.Text("Usuário não cadastrado"))
-    #             dialog.open = True
-    #             page.overlay.append(dialog)
-    #             loggg.content.visible = True
-    #             cadastrar_user.content.visible = True                
-    #             page.update()            
-    #     #     print('login')
-    #     # print(page.auth.user)
-    # page.on_login = onlogin
-
-    # def logout(e):
-    #     loggg.content.visible = True
-    #     cadastrar_user.content.visible = True 
-    #     page.update()
-
-
-
-    # btn_log_google = ft.IconButton(
-    #     content = ft.Image(
-    #         src='logo_google.png',
-    #         data = 'google',
-    #         width = 120,
-    #         height = 25,
-    #         border_radius = 20,
-    #         fit = ft.ImageFit.FILL,
-    #     ),
-    #     on_click = fazerlogin,
-    #     style = ft.ButtonStyle(
-    #         padding=ft.Padding(0,0,0,0),
-    #     ),
-
-    # )
-    # btn_log_github =  ft.IconButton(
-    #     content = ft.Image(
-    #         src='logo_github.png',
-    #         data = 'Github',
-    #         width = 120,
-    #         height = 25,
-    #         border_radius = 20,
-    #         fit = ft.ImageFit.FILL,
-    #     ),
-    #     on_click = fazerlogin,
-    #     style = ft.ButtonStyle(
-    #         padding=ft.Padding(0,0,0,0),
-    #     ),
-
-    # )   
-
-    # linha_botoes_bigs = ft.Row(
-    #     controls = [btn_log_google ,btn_log_github],
-    #     tight=True,
-    #     alignment='center',
-    #     vertical_alignment='center',
-    # )
-
-    # linha_btn_cadastro_login = ft.Row([
-    #     ft.TextButton(
-    #         'Fazer login',
-    #         height = 20,
-    #         style = ft.ButtonStyle(
-    #             color = {
-    #                 ft.ControlState.HOVERED:'#ede8fd',
-    #                 ft.ControlState.DEFAULT:'blue',
-    #             },
-    #             bgcolor = 'black,0.8',
-    #             padding = ft.Padding(5,0,5,0),
+    bb = ft.BorderSide(1,'blue')
+    def Contain(content, width = None):
+        return ft.Container(
+            content = content,
+            padding = 30,
+            margin=0,
+            border=ft.Border(
+                top = None,
+                left = bb,
+                right=bb,
+                bottom=bb,
+            ),
+            border_radius=ft.BorderRadius(0,0,20,20),
+            # width = 685,
+            # height = 683,            
+            expand=True,
+            # shadow=ft.BoxShadow(
+            #     color = ft.colors.with_opacity(0.9, ft.colors.PRIMARY),
+            #     offset = ft.Offset(0,0),
+            #     blur_style=ft.ShadowBlurStyle.OUTER,
+            #     blur_radius = 300,
+            #     spread_radius = 8,
+            # ),
+            # bgcolor='#231E1E',
+            gradient = ft.LinearGradient(
+                end=ft.alignment.top_center,
+                begin = ft.alignment.bottom_center,
+                colors=[                        
+                    '#242627',
+                    '#414345',
+                ]
+                
+            ),            
              
-    #         ),
-    #         data = 'telalogin',
-    #         on_click=abrirtela,
-    #     ),  
-    #     ft.TextButton(
-    #         'Cadastre-se',
-    #         height = 20,
-    #         style = ft.ButtonStyle(
-    #             color = {
-    #                 ft.ControlState.HOVERED:'#ede8fd',
-    #                 ft.ControlState.DEFAULT:'blue',
-    #             },
-    #             bgcolor = 'black,0.8',
-    #             padding = ft.Padding(5,0,5,0),
-    #         ),
-    #         data = 'telacadastro',
-    #         on_click=abrirtela,
-    #     ),        
-    #     ],
-    #     tight=True,
-    #     alignment='center',
-    #     vertical_alignment='center',
-    
-    # )
+            # bgcolor='#000000',
+            
+            # border=ft.border.all(0.1,'#c0b3b3')
+        )
+    ConfirmarSaidaeResize(page,exibir=False, width_min=480,height_min=605, onlyresize=True)# funcao=sair,
 
-
-    # loggg = ft.Container(
-    #             content = ft.Column(
-    #                 controls = [
-                        
-    #                     linha_botoes_bigs,
-
-    #                     Login(entrar, 'login'),
-    #                     linha_btn_cadastro_login,
-    #                 ],
-    #                 alignment='center',
-    #                 horizontal_alignment='center', 
-    #             ),
-    #             alignment=ft.alignment.center,  
-    #             expand = True,
-    #             image = ft.DecorationImage(
-    #                 src =  "git.png",  # URL da imagem de fundo
-    #                 fit = ft.ImageFit.FILL
-    #             ),
-    #         )
-
-
-    # cadastrar_user = ft.Container(
-    #             content = ft.Column(
-    #                 controls = [
-    #                     linha_botoes_bigs,
-    #                     Login(entrar, 'cadastro'),
-    #                     linha_btn_cadastro_login,                  
-
-    #                 ],
-    #                 alignment='center',
-    #                 horizontal_alignment='center', 
-    #             ),
-    #             alignment=ft.alignment.center,  
-    #             expand = True,
-    #             image = ft.DecorationImage(
-    #                 src =  "git.png",  # URL da imagem de fundo
-    #                 fit = ft.ImageFit.FILL
-    #             ),
-    #         )
 
     pl = LoginG(        ft.Container(
             gradient = ft.LinearGradient(
@@ -2633,15 +2342,81 @@ def main(page: ft.Page):
                         colors=[                        
                             ft.colors.with_opacity(i/20, ft.colors.SURFACE_VARIANT) for i in  [1,2]
                         ]
+                        
                     ),
             content = p,
             expand=True,
+
+            
     ))
-    tema = TemaSelectSysten()
-    tema.visible = False
-    page.add(p,tema
+    def Minimizar(e):
+        page.window.minimized = True
+        page.update()
+    def Maximizar(e):
+        e.control.data = not e.control.data
+        if e.control.data:
+            page.window.maximized = True
+        else:
+            page.window.maximized = False
+
+        page.update()        
+    page.add(
+        ft.Row(
+            controls = [
+                ft.WindowDragArea(
+                    content=ft.Container(
+                        expand=True,
+                        gradient = ft.LinearGradient(
+                            end=ft.alignment.center_left,
+                            begin = ft.alignment.center_right,
+                            colors=[                        
+                                '#242627',
+                                '#414345',
+                            ]
+                            
+                        ),
+                        content = ft.Row(
+                            controls = [
+                                ft.IconButton(
+                                    icon=ft.icons.MINIMIZE,
+                                    scale=0.7,
+                                    on_click = Minimizar
+
+                                    
+                                ),
+                                ft.IconButton(
+                                    icon=ft.icons.SQUARE_OUTLINED,
+                                    scale=0.7,
+                                    on_click = Maximizar,
+                                    data = False,
+
+
+                                ),
+                                ft.IconButton(
+                                    icon=ft.icons.CLOSE,
+                                    scale=0.7,
+                                    on_click = lambda x:page.window.close()
+
+                                ),                                                                
+                
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                            spacing=0,
+
+                        )    
+
+                    ),
+                    expand = True,
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+            height=30,
+            expand_loose=True,
+        ),
+        Contain(p)
 
     )
+
 
 
 

@@ -1,7 +1,9 @@
 
 import flet as ft
 import datetime
-from treinos import Treinos
+from treinos import Treinos,Verificar_pasta, path
+
+from temaselectsysten import TemaSelectSysten
 
 class Saida:
     def __init__(self,  page = None):
@@ -28,25 +30,55 @@ class Saida:
 class Estudos(ft.Container):
     def __init__(self, nome, bpm):
         super().__init__()  
-        self.nome = ft.Text(value=nome, weight='BOLD', size=25, col = 9)  
+        self.nome = ft.Text(
+            value=nome, 
+            weight='BOLD', 
+            size=25, 
+            col = 9,
+            color = '#597799',
+        )  
+
         self.b = ft.TextField(
             hint_text='bpm',
             value=bpm,
             dense=True,
-            # width=60,
+            width=80,
             col = 3,
-            border_width=1,
+            filled=True,
+            border_width=0,
+            # focused_border_width = 0,
+            fill_color='#503F3F',
+            # border_width=1,
+            # focused_bgcolor = 'white,0.9',
+            border_radius=12,
             content_padding=5,
             text_align='center',
             text_style=ft.TextStyle(
-                weight=ft.FontWeight.W_600
+                weight=ft.FontWeight.W_900,
+                # size = 18,
+                color = '#A0BAD7',
             ),
             input_filter = ft.NumbersOnlyInputFilter()          
         )
-        self.content = ft.ResponsiveRow(
+        self.content = ft.Row(
             spacing = 5,
             alignment = ft.MainAxisAlignment.SPACE_BETWEEN,
-            controls = [self.nome,self.b],
+            expand=True,
+            vertical_alignment=ft.CrossAxisAlignment.END,
+            controls = [
+                self.nome,
+                ft.Text(
+                    value='_'*500, 
+                    # weight='BOLD', 
+                    size=5, 
+                    col = 9,
+                    color = '#597799',
+                    expand=True,
+                    no_wrap=True,
+                ),                  
+                
+                self.b,
+            ],
         )
         
     @property
@@ -58,15 +90,125 @@ class Estudos(ft.Container):
         self.b.value = bpm
 
 
+
+class ConfirmarSaidaeResize:
+    def __init__(self,page, funcao = None, exibir = True, width_min = None, height_min = None, onlyresize = False):
+        super().__init__()
+        self.page = page
+        self.funcao = funcao
+        self.width_min = width_min
+        self.height_min = height_min
+        self.confirm_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Confirme!"),
+            content=ft.Text("Deseja realmente fechar o App?"),
+            actions=[
+                ft.ElevatedButton("Sim", on_click=self.yes_click),
+                ft.OutlinedButton("Não", on_click=self.no_click),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.page.window.on_event = self.window_event
+        self.onlyresize = onlyresize
+        if not onlyresize:
+            self.page.window.prevent_close = True 
+
+        self.page.on_resized = self.page_resize
+        # self.page.window.on_event = self.page_resize
+        self.nome = f'{self.page.title}_tamanho'
+        self.exibir = exibir
+        if self.exibir:
+            self.pw = ft.Text(bottom=10, right=10, theme_style=ft.TextThemeStyle.TITLE_MEDIUM )
+            self.page.overlay.append(self.pw) 
+        self.Ler_dados() 
+
+
+    async def window_event(self, e):
+            await self.page_resize(e)
+            if e.data == "close" and not self.onlyresize:
+                self.page.overlay.append(self.confirm_dialog)
+                
+                self.confirm_dialog.open = True
+                self.page.update()
+
+    def yes_click(self,e):
+        if self.funcao not in ['', None]:
+            self.funcao(e)
+        self.page.window.destroy()
+
+    def no_click(self,e):
+        self.confirm_dialog.open = False
+        self.page.update()
+
+
+
+    async def page_resize(self, e):
+        if self.exibir:
+            self.pw.value = f'{self.page.window.width}*{self.page.window.height} px'
+            self.pw.update()
+        valores = [self.page.window.width,self.page.window.height,self.page.window.top,self.page.window.left]
+
+        if valores[1]< self.height_min:
+            valores[1] = self.height_min
+        if valores[0]< self.width_min:
+            valores[0] = self.width_min      
+        if valores[2] <0:
+              valores[2] = 0   
+        if valores[3] <0:
+              valores[3] = 0                
+        # with open('assets/tamanho.txt', 'w') as arq:
+        #     arq.write(f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
+        await self.page.client_storage.set_async(self.nome, f'{valores[0]},{valores[1]},{valores[2]},{valores[3]}')
+        
+
+  
+
+    def Ler_dados(self):
+        try:
+            # with open('assets/tamanho.txt', 'r') as arq:
+            #     po = arq.readline()
+
+            po = self.page.client_storage.get(self.nome)
+
+            p1 = po.split(',')
+            p = [int(float(i)) for i in p1]
+            po = p[:4] 
+
+            if po[0]< self.width_min:
+                po[0] = self.width_min   
+            if po[1]< self.height_min:
+                po[1] = self.height_min 
+            if po[2] <0:
+                po[2] = 0   
+            if po[3] <0:
+                po[3] = 0                                   
+
+            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = po
+            # print('acerto')
+        except:
+            # print('erro!')
+            # with open('assets/tamanho.txt', 'w') as arq:
+            #     arq.write(f'{self.page.window.width},{self.page.window.height},{self.page.window.top},{self.page.window.left}')
+            self.page.window.width, self.page.window.height,self.page.window.top,self.page.window.left = self.width_min,self.height_min,0,0
+
+
+
+
 class TreinosDiarios(ft.Column):
     def __init__(self,page):
         super().__init__()
         self.page = page
+        # self.page.window.opacity = 0.5
+        # self.page.window.width = 685  # Define a largura da janela como 800 pixels
+        # self.page.window.height = 683  # 
+        # self.page.bgcolor = '#876c6c',
         self.expand = True
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        self.data_atual = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
+        # self.alignment = ft.MainAxisAlignment.START
+        self.data_atual = datetime.datetime.now().strftime("%d-%m-%Y")
         self.treinos = Treinos(self.page)
-        self.treino_hoje = self.treinos.exercicio_do_dia()
+        # self.treino_hoje = self.treinos.exercicio_do_dia()
+        # print('nome_do_treino', self.treino_hoje)
 
         self.default = {
             'treinos':{
@@ -83,30 +225,43 @@ class TreinosDiarios(ft.Column):
                 'dom':None
             }
         }
-        self.nome_arq_treino = r'assets/treinos.json'
-        self.nome_arq_estudos = r'assets/estudos.json'
-        self.arquiv = self.treinos.ler_json(
-            self.nome_arq_treino,
-            default=self.default
-            )  
+        # self.nome_arq_treino = r'.\assets\treinos.json'
+        pasta = Verificar_pasta()
+        self.nome_arq_treino = pasta.caminho('treinos.json')
+        if not path.exists(self.nome_arq_treino):
+            self.page.client_storage.remove(f'{self.page.title}_materia')
+        
+        # self.nome_arq_estudos = r'.\assets\estudos2.json'
+        self.nome_arq_estudos = pasta.caminho('estudos2.json')
+        if not path.exists(self.nome_arq_estudos):
+            self.page.client_storage.remove(f'{self.page.title}_treino')
+                
+ 
         self.default_estudos  = {
             "None do Treino2":{
                 "29-10-2024 22:40":[100,120,105],
                 "30-10-2024 22:40":[101,121,106]
             }
         }   
-        self.arquiv_estudos = self.treinos.ler_json(
-            self.nome_arq_estudos,
-            default=self.default_estudos
-            )             
-
+          
+        style_btn = ft.ButtonStyle(
+            color='#92BBEA',
+            bgcolor = '#31343C',
+            text_style = ft.TextStyle(
+                size=24,
+                weight='BOLD',
+            ),
+        )
         self.btn_salvar = ft.FilledButton(
             text= 'Salvar',
             on_click=self.SalvarEstudoFeito,
+            style = style_btn,
         )
         self.modoedicao = ft.FilledButton(
             text= 'Modo Edição',
             on_click=self.AbrirModoEdicao,
+            style = style_btn,
+
         )
 
         self.CarregarListaEstudos()
@@ -122,47 +277,73 @@ class TreinosDiarios(ft.Column):
         self.materia = ft.Dropdown(
             label = 'Materias',
             # width=150,
-
-            col = 8,
-            border_width=1,
+            border_radius=12,
+            border_color='#323232',
+            text_style = ft.TextStyle(
+                size=20,
+                weight='BOLD',
+                color='#B0B0B0'
+            ),
+            label_style =ft.TextStyle(
+                color = '#C07F7F',
+            ),
+            alignment=ft.alignment.center,
+            fill_color='#22252e',
+            col = 11,
+            expand=True,
+            border_width=0,
             dense = True,
             options=self.treinos.materia.options,
             on_change=self.EscolherMateria,
             value = self.treinos.materia.value
         )
-           
+        tema = TemaSelectSysten(self.page)
+        # tema.visible = False
+        tema.width = 30
         self.controls1 = [
-            self.materia,
+            ft.Row(
+                [
+                    self.materia,
+                    # tema,
+                ], expand_loose=True),
             ft.Container(
+                # visible = False,
                 content = ft.Text(
                     f'{self.data_atual}',
                     weight=ft.FontWeight.W_900, 
-                    color = ft.colors.PRIMARY,
+                    color = '#A2AEDA',    #ft.colors.PRIMARY,
                     size=20,
                 ),
-                gradient=ft.LinearGradient(
-                    colors = [ft.colors.BLUE_900, ft.colors.GREEN_900],
-                    begin = ft.alignment.top_center,
-                    end=ft.alignment.bottom_center,
-                    # stops=[0,0.3],
-                ),
-                shadow=ft.BoxShadow(
-                    color = ft.colors.with_opacity(0.7,ft.colors.BLUE),
-                    spread_radius = 3,
-                    blur_radius = 100,
-                    blur_style = ft.ShadowBlurStyle.NORMAL,
-                ),
+                # gradient=ft.LinearGradient(
+                #     colors = [ft.colors.BLUE_900, ft.colors.GREEN_900],
+                #     begin = ft.alignment.top_center,
+                #     end=ft.alignment.bottom_center,
+                #     # stops=[0,0.3],
+                # ),
+                # shadow=ft.BoxShadow(
+                #     color = ft.colors.with_opacity(0.7,ft.colors.BLUE),
+                #     spread_radius = 3,
+                #     blur_radius = 100,
+                #     blur_style = ft.ShadowBlurStyle.NORMAL,
+                # ),
                 border_radius=12,
+                bgcolor = '#6F5656',
                 padding=ft.Padding(10,5,10,5),
                 alignment=ft.alignment.center,
                 width=300
             ) ,
             ft.Row(
                 [
-                    ft.Text(f'{self.treino_hoje}', size=15, italic = True, weight=ft.FontWeight.W_500),
+                    ft.Text(
+                        f'{self.treino_hoje}', 
+                        size=15, 
+                        italic = True, 
+                        weight=ft.FontWeight.W_500,
+                        color = '#A2AEDA',
+                    ),
 
                 ],
-                alignment='center'
+                alignment='center',
             ),
             self.Estudos_exibidos,
             ft.Row(
@@ -171,7 +352,7 @@ class TreinosDiarios(ft.Column):
                     self.modoedicao,
 
                 ],
-                alignment='center'
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             ),            
         ]
 
@@ -179,7 +360,7 @@ class TreinosDiarios(ft.Column):
 
 
     def did_mount(self):
-        self.page.window.width = 400
+    #     self.page.window.width = 400
         self.page.update()
 
     def EscolherMateria(self, e):
@@ -191,7 +372,7 @@ class TreinosDiarios(ft.Column):
         self.Estudos_exibidos.controls = self.lista_estudos
         self.Estudos_exibidos.update()
 
-    def CarregarListaEstudos(self):
+    def CarregarListaEstudos2(self):
         self.lista_treinos = self.arquiv[self.treinos.materia.value]['treinos'][self.treino_hoje]
         try:
             self.lista_valores_estudos =  self.arquiv_estudos[self.treino_hoje][-1][1]
@@ -200,9 +381,36 @@ class TreinosDiarios(ft.Column):
             self.lista_estudos = [Estudos(i,None) for i in self.lista_treinos]
 
 
-
-
-    def SalvarEstudoFeito(self, e):
+    def CarregarListaEstudos(self):
+        self.arquiv = self.treinos.ler_json(
+            self.nome_arq_treino,
+            default=self.default
+            )         
+        self.arquiv_estudos = self.treinos.ler_json(
+            self.nome_arq_estudos,
+            default=self.default_estudos
+            )      
+        
+        self.treino_hoje = self.treinos.exercicio_do_dia()  
+        # lista_treinos_mais_recente =         
+        self.lista_treinos = self.arquiv[self.treinos.materia.value]['treinos'].get(self.treino_hoje, None)
+        # try:
+        nome_do_treino = self.treino_hoje
+        print('nome_do_treino', nome_do_treino)
+        estudos = self.arquiv_estudos.get(nome_do_treino,None)
+        if isinstance(estudos, dict):
+            data_mais_recente = list(estudos.keys())[-1]
+            print('data_mais_recente',data_mais_recente)
+            self.lista_valores_estudos =  estudos[data_mais_recente]
+        # print(self.lista_valores_estudos)
+            self.lista_estudos = [Estudos(i,b) for i,b in zip(self.lista_treinos,self.lista_valores_estudos)]
+        else:
+            if isinstance(self.lista_treinos, list):
+                self.lista_estudos = [Estudos(i,None) for i in self.lista_treinos]
+            else:
+                self.lista_estudos = []
+        print(self.lista_estudos)
+    def SalvarEstudoFeito2(self, e):
         valores = [int(float(i.bpm)) for i in self.lista_estudos ]
         self.arquiv_estudos = self.treinos.ler_json(
             self.nome_arq_estudos,
@@ -215,30 +423,70 @@ class TreinosDiarios(ft.Column):
             self.arquiv_estudos[self.treino_hoje].append([self.data_atual,valores])
     
         self.treinos.escrever_json(self.arquiv_estudos, self.nome_arq_estudos)
+        # self.arquiv_estudos
 
-
+    def SalvarEstudoFeito(self, e):
+        valores = [int(float(i.bpm)) for i in self.lista_estudos ]
+        self.arquiv_estudos = self.treinos.ler_json(
+            self.nome_arq_estudos,
+            default=self.default_estudos
+            )
+        self.arquiv_estudos[self.treino_hoje] = {self.data_atual:valores}    
+        self.treinos.escrever_json(self.arquiv_estudos, self.nome_arq_estudos)
         # self.arquiv_estudos
 
 
-    def AbrirModoEdicao(self, e):
 
-        self.controls = [Treinos(self.page), ft.OutlinedButton('Voltar', on_click=self.Voltar, expand_loose=True , width=300)]
-        self.page.window.width = 700
-        self.page.update()
+
+
+    def AbrirModoEdicao(self, e):
+        self.controls = [
+            Treinos(self.page), 
+            ft.Row(
+                [
+                    ft.OutlinedButton(
+                        'Voltar', 
+                        on_click=self.Voltar, 
+                        expand=True , 
+                        # width=600, 
+                        # height=30
+                    ),
+
+                ],
+                height=30,
+
+            )
+        ]
+        # self.page.window.width = 800
+        # self.page.update()
         self.update()
 
     def Voltar(self, e):
         self.controls = self.controls1
-        self.page.window.width = 400
-        self.page.update()
         self.update()     
-        self.CarregarListaEstudos()   
+        self.CarregarListaEstudos()
+        print(self.lista_estudos)
+        self.Estudos_exibidos.controls = self.lista_estudos
         self.Estudos_exibidos.update()
+        self.arquiv = self.treinos.ler_json(
+            self.nome_arq_treino,
+            default=self.default
+            )         
+        self.lista_materias =  list(self.arquiv.keys())  
+        self.materia.options = [] 
+        for materia in self.lista_materias:
+            if materia not in ['', None]:
+                self.materia.options.append(ft.dropdown.Option(materia)) 
+
+
+        self.materia.update()
+
+
 def main(page: ft.Page):
     # Definindo o t�tulo da p�gina
     page.title = 'Treinos'
-    page.window.width = 400  # Define a largura da janela como 800 pixels
-    page.window.height = 700  # 
+    page.window.width = 685  # Define a largura da janela como 800 pixels
+    page.window.height = 683  # 
     page.horizontal_alignment = 'center'
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(
