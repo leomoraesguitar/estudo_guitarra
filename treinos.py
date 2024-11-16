@@ -434,7 +434,7 @@ class Treinos(ft.Column):
     def __init__(self, page):
         super().__init__()
         self.page = page
-
+        self.spacing = 5
         self.expand = True
         self.cont = 0
         self.default = {
@@ -602,6 +602,7 @@ class Treinos(ft.Column):
             on_click=self.Add_Novo_treino,
             style=style_btn,
             col = {'xs':12, 'sm':6},
+            height=30,
 
         )
         self.btn_salvar_treino = ft.FilledButton(
@@ -609,6 +610,7 @@ class Treinos(ft.Column):
             on_click=self.SalvarTreino,
             style=style_btn,
             col = {'xs':12, 'sm':6},
+            height=30,
         )
         # self.btn_add_novo_treino = ft.FilledButton(
         #     text = 'Add.',
@@ -618,8 +620,14 @@ class Treinos(ft.Column):
             controls = [
                 self.treinos,
                 ft.Row(
-                    [ft.Text('Data inicial:'),self.data_inicial,self.data_select],
+                    [
+                        ft.Text('Data inicial:'),
+                        self.data_inicial,
+                        self.data_select
+                    ],
                     alignment='center',
+                    wrap=True,
+                    run_spacing=0,
                 ),
                 self.modo_automatico,                
                 self.modo_manual,
@@ -633,7 +641,7 @@ class Treinos(ft.Column):
             ],
             width=270,
             # expand=True,
-            spacing=5,
+            spacing=0,
 
         )
 

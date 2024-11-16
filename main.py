@@ -2298,15 +2298,17 @@ def main(page: ft.Page):
     def Contain(content, width = None):
         return ft.Container(
             content = content,
-            padding = 30,
+            padding = ft.Padding(30,0,30,30),
             margin=0,
-            border=ft.Border(
-                top = None,
-                left = bb,
-                right=bb,
-                bottom=bb,
-            ),
-            border_radius=ft.BorderRadius(0,0,20,20),
+            # border=ft.Border(
+            #     top = None,
+            #     left = bb,
+            #     right=bb,
+            #     bottom=bb,
+            # ),
+            border = bb,
+            # border_radius=ft.BorderRadius(0,0,20,20),
+            border_radius=20,
             # width = 685,
             # height = 683,            
             expand=True,
@@ -2360,21 +2362,21 @@ def main(page: ft.Page):
             page.window.maximized = False
 
         page.update()        
-    page.add(
-        ft.Row(
+    botoes_janela = ft.Row(
             controls = [
                 ft.WindowDragArea(
                     content=ft.Container(
                         expand=True,
-                        gradient = ft.LinearGradient(
-                            end=ft.alignment.center_left,
-                            begin = ft.alignment.center_right,
-                            colors=[                        
-                                '#242627',
-                                '#414345',
-                            ]
+                        border_radius = 20,
+                        # gradient = ft.LinearGradient(
+                        #     end=ft.alignment.center_left,
+                        #     begin = ft.alignment.center_right,
+                        #     colors=[                        
+                        #         '#242627',
+                        #         '#414345',
+                        #     ]
                             
-                        ),
+                        # ),
                         content = ft.Row(
                             controls = [
                                 ft.IconButton(
@@ -2412,10 +2414,23 @@ def main(page: ft.Page):
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
             height=30,
             expand_loose=True,
-        ),
-        Contain(p)
-
+        )
+        
+    page.add(
+        Contain(
+            ft.Column(
+                controls = [
+                  botoes_janela,
+                  p  
+                ],
+                spacing=10,
+                alignment=ft.MainAxisAlignment.START,
+            )
+        )
     )
+            
+            
+
 
 
 
